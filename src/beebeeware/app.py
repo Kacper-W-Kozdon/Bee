@@ -29,18 +29,9 @@ class BeeBeeware(toga.App):
         """
         self.buttons = OrderedDict({"Placeholder button": self.draw_text})
         main_box = toga.Box()
+
         menu_previews_split = toga.SplitContainer()
         menu = toga.Box(style=Pack(direction=COLUMN, margin_top=50))
-        self.previews = toga.Box(style=Pack(direction=COLUMN, margin_top=50))
-
-        main_box.content = menu_previews_split
-
-        self.canvas = toga.Canvas(
-            style=Pack(flex=1),
-            on_resize=self.on_resize,
-            on_press=self.on_press,
-        )
-        box = toga.Box(children=[self.canvas])
 
         for button_name, button_action in self.buttons.items():
             menu.add(
@@ -51,14 +42,23 @@ class BeeBeeware(toga.App):
                 )
             )
 
-        menu_previews_split.content = [(menu, 1), (self.previews, 3)]
+        self.previews = toga.Box(style=Pack(direction=COLUMN, margin_top=50))
 
+        menu_previews_split.content = [(menu, 1), (self.previews, 1)]
+
+        main_box.add(menu_previews_split)
+
+        self.canvas = toga.Canvas(
+            style=Pack(flex=1),
+            on_resize=self.on_resize,
+            on_press=self.on_press,
+        )
 
         self.main_window = toga.MainWindow(title=self.formal_name)
         self.main_window.content = main_box
         self.main_window.show()
 
-    def draw_text(self):
+    def draw_text(self, widget):
         self.previews.content = self.canvas
         font = toga.Font(family=SANS_SERIF, size=20)
         self.text_width, text_height = self.canvas.measure_text(self.placeholder_text, font)
