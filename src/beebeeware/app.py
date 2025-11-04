@@ -31,7 +31,9 @@ class BeeBeeware(toga.App):
         main_box = toga.Box()
         menu_previews_split = toga.SplitContainer()
         menu = toga.Box(style=Pack(direction=COLUMN, margin_top=50))
-        previews = toga.Box(style=Pack(direction=COLUMN, margin_top=50))
+        self.previews = toga.Box(style=Pack(direction=COLUMN, margin_top=50))
+
+        main_box.content = menu_previews_split
 
         self.canvas = toga.Canvas(
             style=Pack(flex=1),
@@ -49,7 +51,7 @@ class BeeBeeware(toga.App):
                 )
             )
 
-        menu_previews_split.content = [(menu, 1), (previews, 3)]
+        menu_previews_split.content = [(menu, 1), (self.previews, 3)]
 
 
         self.main_window = toga.MainWindow(title=self.formal_name)
@@ -57,6 +59,7 @@ class BeeBeeware(toga.App):
         self.main_window.show()
 
     def draw_text(self):
+        self.previews.content = self.canvas
         font = toga.Font(family=SANS_SERIF, size=20)
         self.text_width, text_height = self.canvas.measure_text(self.placeholder_text, font)
 
