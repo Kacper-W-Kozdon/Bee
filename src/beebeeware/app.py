@@ -4,8 +4,11 @@ An app for Bee.
 
 import asyncio
 import toga
-from decimal import Decimal
+import pathlib
+import json
 
+from decimal import Decimal
+from dataclasses import dataclass
 
 from toga.style.pack import CENTER, COLUMN, ROW, Pack
 from toga.colors import WHITE, rgb
@@ -13,9 +16,40 @@ from toga.constants import Baseline
 from toga.fonts import SANS_SERIF
 from toga.style import Pack
 
-from typing import OrderedDict
+from typing import OrderedDict, Union, Optional
+
+@dataclass
+class Config:
+    config_path: Union[str, pathlib.Path] = ""
+    placholder_option_1: str = ""
+    placeholder_option_2: str = ""
 
 
+def load_config(path: Union[str, pathlib.Path, None] = None, config: Config = Config()) -> Config:
+
+    config_path: Union[str, pathlib.Path] = ""
+    if (config.config_path == "") or (path is not None):
+        config.config_path = path or __file__
+
+    config_path = config.config_path
+
+    config_path = pathlib.Path(config_path)
+
+    if not config_path.is_file():
+        placeholder = {"configs": None}
+        json_configs = json.dumps(placeholder)
+
+        with open(config_path, "w") as config_file:
+            config_file.write(json_configs)
+
+    config_dict: OrderedDict = OrderedDict({})
+    with open(config_path, 'r') as config_file:
+        config_dict = json.load(config_file)
+
+    for option_name, option_value in config_dict.items():
+        setattr(config, option_name, option_value)
+
+    return config
 
 
 class BeeBeeware(toga.App):
