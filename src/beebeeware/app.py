@@ -44,9 +44,11 @@ class BeeBeeware(toga.App):
 
         self.main_window = toga.MainWindow(title=self.formal_name)
 
-        self.buttons = OrderedDict({
+        self.main_buttons = OrderedDict({
             "Model": self.preview_model_menu,
-            "Config": self.preview_config,
+            "Config": self.preview_config,})
+        
+        self.aux_buttons = OrderedDict({
             "Load from file": self.load_config,
             "Save to file": self.save_config})
         main_box = toga.Box(style=Pack(direction=COLUMN))
@@ -55,7 +57,7 @@ class BeeBeeware(toga.App):
 
         menu = toga.Box(id="menu", style=Pack(direction=COLUMN, alignment=CENTER))
 
-        for button_name, button_action in self.buttons.items():
+        for button_name, button_action in self.main_buttons.items():
             menu.add(
                 toga.Button(
                     f"{button_name}",
@@ -100,8 +102,8 @@ class BeeBeeware(toga.App):
         })
 
         config_scroll = toga.Box(id="config", style=Pack(direction=COLUMN))
-        save_button = toga.Button("Save to file", on_press=self.buttons["Save to file"])
-        load_button = toga.Button("Load from file", on_press=self.buttons["Load from file"])
+        save_button = toga.Button("Save to file", on_press=self.aux_buttons["Save to file"])
+        load_button = toga.Button("Load from file", on_press=self.aux_buttons["Load from file"])
 
         for config_name, config_input in config.items():
             label = toga.Label(config_name)
