@@ -4,11 +4,13 @@ An app for Bee.
 
 import asyncio
 import toga
+import toga.paths
 import pathlib
 import json
 
 from decimal import Decimal
 from dataclasses import dataclass
+from typing import Coroutine
 
 from toga.style.pack import CENTER, COLUMN, ROW, Pack
 from toga.colors import WHITE, rgb
@@ -18,38 +20,12 @@ from toga.style import Pack
 
 from typing import OrderedDict, Union, Optional
 
+
 @dataclass
 class Config:
     config_path: Union[str, pathlib.Path] = ""
     placholder_option_1: str = ""
     placeholder_option_2: str = ""
-
-
-def load_config(path: Union[str, pathlib.Path, None] = None, config: Config = Config()) -> Config:
-
-    config_path: Union[str, pathlib.Path] = ""
-    if (config.config_path == "") or (path is not None):
-        config.config_path = path or __file__
-
-    config_path = config.config_path
-
-    config_path = pathlib.Path(config_path)
-
-    if not config_path.is_file():
-        placeholder = {"configs": None}
-        json_configs = json.dumps(placeholder)
-
-        with open(config_path, "w") as config_file:
-            config_file.write(json_configs)
-
-    config_dict: OrderedDict = OrderedDict({})
-    with open(config_path, 'r') as config_file:
-        config_dict = json.load(config_file)
-
-    for option_name, option_value in config_dict.items():
-        setattr(config, option_name, option_value)
-
-    return config
 
 
 class BeeBeeware(toga.App):
@@ -70,7 +46,9 @@ class BeeBeeware(toga.App):
 
         self.buttons = OrderedDict({
             "Model": self.preview_model_menu,
-            "Config": self.preview_config})
+            "Config": self.preview_config,
+            "Load from file": self.load_config,
+            "Save to file": self.save_config})
         main_box = toga.Box(style=Pack(direction=COLUMN))
 
         menu_previews_split = toga.SplitContainer(style=Pack(direction=COLUMN))
@@ -122,6 +100,8 @@ class BeeBeeware(toga.App):
         })
 
         config_scroll = toga.Box(id="config", style=Pack(direction=COLUMN))
+        save_button = toga.Button("Save to file", on_press=self.buttons["Save to file"])
+        load_button = toga.Button("Load from file", on_press=self.buttons["Load from file"])
 
         for config_name, config_input in config.items():
             label = toga.Label(config_name)
@@ -132,7 +112,83 @@ class BeeBeeware(toga.App):
 
             config_scroll.add(config_box)
 
+        save_load_box = toga.Box(id="save_and_load", style=Pack(direction=ROW))
+        save_load_box.add(save_button)
+        save_load_box.add(load_button)
+
+        config_scroll.add(save_load_box)
+
         self.previews_container.content = config_scroll
+
+    async def text_input(self, widget, window_name: str = "") -> str:
+        out: str = ""
+        text_window = toga.Window(title = window_name)
+        
+        entry_box = toga.Box(id=window_name, style=Pack(direction=ROW))
+        text_input = toga.TextInput(placeholder=f"{window_name}")
+        out = text_input.value
+        confirm_button = toga.Button("Confirm", on_press=lambda _: text_window.close())
+
+        entry_box.add(text_input)
+        entry_box.add(confirm_button)
+
+        text_window.content = entry_box
+        text_window.show()
+        return out
+    
+    async def load_config(self, widget, path: Union[str, pathlib.Path, None] = None, config: Config = Config()) -> Config:
+
+        path = await self.text_input(widget, "Load")
+
+        config_path: Union[str, pathlib.Path] = ""
+        if (config.config_path == "") or (path is not None):
+            config.config_path = path or toga.paths.Paths().config
+
+        config_path = config.config_path
+
+        config_path = pathlib.Path(config_path)
+
+        if not config_path.is_file():
+            placeholder = {"configs": None}
+            json_configs = json.dumps(placeholder)
+
+            with open(pathlib.Path(f"{config_path}\\beeconfig.json"), "w") as config_file:
+                config_file.write(json_configs)
+
+        config_dict: OrderedDict = OrderedDict({})
+        with open(pathlib.Path(f"{config_path}\\beeconfig.json"), 'r') as config_file:
+            config_dict = OrderedDict(json.load(config_file))
+
+        for option_name, option_value in config_dict.items():
+            setattr(config, option_name, option_value)
+
+        return config
+
+    async def save_config(self, widget, path: Union[str, pathlib.Path, None] = None, config: Config = Config()) -> None:
+        path = await self.text_input(widget, window_name="Save")
+
+        config_path: Union[str, pathlib.Path] = ""
+        if (config.config_path == "") or (path is not None):
+            config.config_path = path or toga.paths.Paths().config
+
+        config_path = config.config_path
+
+        config_path = pathlib.Path(config_path)
+
+        if not config_path.is_file():
+            placeholder = {"configs": None}
+            json_configs = json.dumps(placeholder)
+
+            with open(pathlib.Path(f"{config_path}\\beeconfig.json"), "w") as config_file:
+                config_file.write(json_configs)
+
+        config_to_save = config.__dict__
+        json_config = json.dumps(config_to_save)
+
+        with open(pathlib.Path(f"{config_path}\\beeconfig.json"), "w") as config_file:
+            config_file.write(json_config)
+
+        print(f"Config file saved at {config_path=}")
 
     def draw_text(self, widget):
         print("Writing on canvas.")
