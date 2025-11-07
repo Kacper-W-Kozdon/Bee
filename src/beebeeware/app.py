@@ -7,10 +7,12 @@ import toga
 import toga.paths
 import pathlib
 import json
+import copy
 
 from decimal import Decimal
 from dataclasses import dataclass
 from typing import Coroutine
+from functools import partial
 
 from toga.style.pack import CENTER, COLUMN, ROW, Pack
 from toga.colors import WHITE, rgb
@@ -33,6 +35,7 @@ class BeeBeeware(toga.App):
     placeholder_text = "Placeholder"
     main_window_split = {"menu": 1, "previews": 2}
     preview_container_split = {"menu": 1, "options": 1}
+    text_input_box: toga.TextInput
 
     def startup(self):
         """Construct and show the Toga application.
@@ -122,76 +125,95 @@ class BeeBeeware(toga.App):
 
         self.previews_container.content = config_scroll
 
-    async def text_input(self, widget, window_name: str = "") -> str:
-        out: str = ""
-        text_window = toga.Window(title = window_name)
+    def text_input(self, widget, window_name: str = "") -> toga.Window:
+        default: dict[str, str] = {"Save": str(toga.paths.Paths().config), "Load": str(toga.paths.Paths().config)}
+        text_window = toga.Window(title=window_name)
         
         entry_box = toga.Box(id=window_name, style=Pack(direction=ROW))
-        text_input = toga.TextInput(placeholder=f"{window_name}")
-        out = text_input.value
-        confirm_button = toga.Button("Confirm", on_press=lambda _: text_window.close())
+        self.text_input_box = toga.TextInput(placeholder=f"{window_name}")
+        path: str = default[window_name]
 
-        entry_box.add(text_input)
+        confirm_button = toga.Button("Confirm", on_press=partial(self.close_window, window=text_window, path=path))
+
+        entry_box.add(self.text_input_box)
         entry_box.add(confirm_button)
 
         text_window.content = entry_box
+
         text_window.show()
-        return out
+
+        return text_window
     
-    async def load_config(self, widget, path: Union[str, pathlib.Path, None] = None, config: Config = Config()) -> Config:
+    async def load_config(self, widget) -> None:
 
-        path = await self.text_input(widget, "Load")
+        self.text_input(widget, "Load")
 
+    async def save_config(self, widget) -> None:
+
+        self.text_input(widget, window_name="Save")
+
+    def close_window(self, widget, window: toga.Window, path: str, config: Config = Config()) -> Config:
+        print(f"Closing {window.title=}")
+
+        path = self.text_input_box.value or path
         config_path: Union[str, pathlib.Path] = ""
-        if (config.config_path == "") or (path is not None):
-            config.config_path = path or toga.paths.Paths().config
+        if window.title == "Load":
+            
+            if (config.config_path == "") or (path is not None):
+                config.config_path = path
 
-        config_path = config.config_path
+            config_path = config.config_path
 
-        config_path = pathlib.Path(config_path)
+            config_path = pathlib.Path(config_path)
 
-        if not config_path.is_file():
-            placeholder = {"configs": None}
-            json_configs = json.dumps(placeholder)
+            if not config_path.exists() and (config_path is not None):
+                print(f"Creating {config_path=}")
+                pathlib.Path(f"{config_path}\\").mkdir()
+                placeholder = {"configs": None}
+                json_configs = json.dumps(placeholder)
 
-            with open(pathlib.Path(f"{config_path}\\beeconfig.json"), "w") as config_file:
-                config_file.write(json_configs)
+                with open(pathlib.Path(f"{config_path}\\beeconfig.json"), "+w") as config_file:
+                    config_file.write(json_configs)
 
-        config_dict: OrderedDict = OrderedDict({})
-        with open(pathlib.Path(f"{config_path}\\beeconfig.json"), 'r') as config_file:
-            config_dict = OrderedDict(json.load(config_file))
+            if config_path is not None:
+                config_dict: OrderedDict = OrderedDict({})
+                with open(pathlib.Path(f"{config_path}\\beeconfig.json"), 'r') as config_file:
+                    config_dict = OrderedDict(json.load(config_file))
 
-        for option_name, option_value in config_dict.items():
-            setattr(config, option_name, option_value)
+                for option_name, option_value in config_dict.items():
+                    setattr(config, option_name, option_value)
 
+        if window.title == "Save":
+
+            if path is not None:
+                config.config_path = path
+
+            config_path = config.config_path
+
+            config_path = pathlib.Path(config_path)
+
+            if not config_path.exists() and (config_path is not None):
+                print(f"Creating {config_path=}")
+                pathlib.Path(f"{config_path}\\").mkdir()
+                placeholder = {"configs": None}
+                json_configs = json.dumps(placeholder)
+
+                with open(pathlib.Path(f"{config_path}\\beeconfig.json"), "+w") as config_file:
+                    config_file.write(json_configs)
+
+            if config_path is not None:
+                config_to_save = copy.copy(config.__dict__)
+                config_to_save["config_path"] = str(config.__dict__["config_path"])
+                json_config = json.dumps(config_to_save)
+
+                with open(pathlib.Path(f"{config_path}\\beeconfig.json"), "+w") as config_file:
+                    config_file.write(json_config)
+
+                print(f"Config file saved at {config_path=}")
+        
+        window.close()
         return config
-
-    async def save_config(self, widget, path: Union[str, pathlib.Path, None] = None, config: Config = Config()) -> None:
-        path = await self.text_input(widget, window_name="Save")
-
-        config_path: Union[str, pathlib.Path] = ""
-        if (config.config_path == "") or (path is not None):
-            config.config_path = path or toga.paths.Paths().config
-
-        config_path = config.config_path
-
-        config_path = pathlib.Path(config_path)
-
-        if not config_path.is_file():
-            placeholder = {"configs": None}
-            json_configs = json.dumps(placeholder)
-
-            with open(pathlib.Path(f"{config_path}\\beeconfig.json"), "w") as config_file:
-                config_file.write(json_configs)
-
-        config_to_save = config.__dict__
-        json_config = json.dumps(config_to_save)
-
-        with open(pathlib.Path(f"{config_path}\\beeconfig.json"), "w") as config_file:
-            config_file.write(json_config)
-
-        print(f"Config file saved at {config_path=}")
-
+    
     def draw_text(self, widget):
         print("Writing on canvas.")
         self.previews_container.content = self.canvas
