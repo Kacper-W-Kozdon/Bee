@@ -135,7 +135,7 @@ class BeeBeeware(toga.App):
 
         confirm_button = toga.Button("Confirm", on_press=partial(self.close_window, window=text_window, path=path, text_input_box=text_input_box))
 
-        entry_box.add(self.text_input_box)
+        entry_box.add(text_input_box)
         entry_box.add(confirm_button)
 
         text_window.content = entry_box
