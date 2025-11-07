@@ -130,10 +130,10 @@ class BeeBeeware(toga.App):
         text_window = toga.Window(title=window_name)
         
         entry_box = toga.Box(id=window_name, style=Pack(direction=ROW))
-        self.text_input_box = toga.TextInput(placeholder=f"{window_name}")
+        text_input_box = toga.TextInput(placeholder=f"{window_name}")
         path: str = default[window_name]
 
-        confirm_button = toga.Button("Confirm", on_press=partial(self.close_window, window=text_window, path=path))
+        confirm_button = toga.Button("Confirm", on_press=partial(self.close_window, window=text_window, path=path, text_input_box=text_input_box))
 
         entry_box.add(self.text_input_box)
         entry_box.add(confirm_button)
@@ -152,10 +152,10 @@ class BeeBeeware(toga.App):
 
         self.text_input(widget, window_name="Save")
 
-    def close_window(self, widget, window: toga.Window, path: str, config: Config = Config()) -> Config:
+    def close_window(self, widget, window: toga.Window, path: str, text_input_box: toga.TextInput, config: Config = Config()) -> Config:
         print(f"Closing {window.title=}")
 
-        path = self.text_input_box.value or path
+        path = text_input_box.value or path
         config_path: Union[str, pathlib.Path] = ""
         if window.title == "Load":
             
