@@ -21,6 +21,7 @@ test_sources = [
 ]
 
 requires = [
+    "huggingface_hub",
 ]
 test_requires = [
     "pytest",

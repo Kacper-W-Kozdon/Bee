@@ -263,3 +263,10 @@ def main():
 
 if __name__ == "__main__":
     main().main_loop()
+
+# from huggingface_hub import list_models
+
+# models = list_models()
+
+# for index, model in enumerate(models):
+#     print(f"{model.id=}, {model.pipeline_tag=}")
