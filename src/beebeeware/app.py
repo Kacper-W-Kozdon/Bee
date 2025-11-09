@@ -20,7 +20,57 @@ from toga.constants import Baseline
 from toga.fonts import SANS_SERIF
 from toga.style import Pack
 
-from typing import OrderedDict, Union, Optional
+from typing import OrderedDict, Union, Optional, Generator
+from huggingface_hub import list_models
+
+
+def get_models(per_page: int, pipeline_tag: str, total_number: int, page_number: Union[int, None] = None) -> Generator[Union[list[str], None], None, None]:
+
+    models = list_models()
+    models_list: list[str] = []
+    models_counter: int = 0
+
+    for index, model in enumerate(models):
+        if page_number is None:
+            page_number = yield page_number
+            print(f"{page_number=}")
+
+        if model.pipeline_tag != pipeline_tag:
+            continue
+        if page_number == total_number:
+            # print(f"{page_number=}")
+            break
+
+        models_counter += 1
+
+        if page_number > models_counter // per_page:
+
+            continue
+
+        models_list.append(model.id)
+        # print(f"{model.id=}, {model.pipeline_tag=}")
+
+        if (not int(len(models_list) % per_page)) and (len(models_list) > 0):
+            ret = models_list.copy()
+            models_list = []
+            yield ret
+
+
+def get_models_page(total_number: int, page_num: int, per_page: int, pipeline_tag: str = "text-to-image") -> list[str]:
+
+    page_num = int(page_num)
+    models: list[str] = []
+
+    if page_num <= 0:
+        raise ValueError(f"Page number has to be greater than 0. Got {page_num=}")
+
+    models_generator: Generator[list[str], None, None] = get_models(per_page, pipeline_tag, total_number)
+
+    models_generator.send(None)
+
+    models = models or models_generator.send(page_num - 1)
+
+    return models
 
 
 @dataclass
@@ -264,9 +314,3 @@ def main():
 if __name__ == "__main__":
     main().main_loop()
 
-# from huggingface_hub import list_models
-
-# models = list_models()
-
-# for index, model in enumerate(models):
-#     print(f"{model.id=}, {model.pipeline_tag=}")
