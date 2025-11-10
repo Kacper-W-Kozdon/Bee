@@ -86,7 +86,7 @@ def assign_container(fun):
     def outer(container=None):
 
         def inner(instance, widget, *args, **kwargs):
-            return fun(instance, widget, container, *args, **kwargs)
+            return fun(instance, widget, *args, container=container, **kwargs)
         return inner
 
     return outer
@@ -210,12 +210,12 @@ class BeeBeeware(toga.App):
         self.previews_container.content = config_scroll
 
     @assign_container
-    def next(self, widget, container: Union[toga.Box, toga.Table]) -> Union[toga.Box, toga.Table]:
+    def next(self, widget, container: Union[toga.Box, toga.Table, None] = None) -> Union[toga.Box, toga.Table]:
         print(f"{container.id=}, {container.id in self.main_window.content.children=}")
         raise NotImplementedError
 
     @assign_container
-    def previous(self, widget, container: Union[toga.Box, toga.Table]) -> Union[toga.Box, toga.Table]:
+    def previous(self, widget, container: Union[toga.Box, toga.Table, None] = None) -> Union[toga.Box, toga.Table]:
         print(f"{container.id=}, {container.id in self.main_window.content.children=}")
         raise NotImplementedError
 
