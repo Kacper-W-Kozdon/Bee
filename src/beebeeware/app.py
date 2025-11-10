@@ -83,13 +83,13 @@ def get_models_page(total_number: int, page_num: int, per_page: int, pipeline_ta
 def assign_container(fun):
 
     @wraps(fun)
-    def wrapper1(container):
+    def outer(container=None):
 
         def inner(instance, widget, *args, **kwargs):
             return fun(instance, widget, container, *args, **kwargs)
         return inner
 
-    return wrapper1
+    return outer
 
 
 @dataclass
@@ -118,13 +118,15 @@ class BeeBeeware(toga.App):
 
         self.main_buttons = OrderedDict({
             "Model": self.preview_model_menu,
-            "Config": self.preview_config,})
+            "Config": self.preview_config,
+            })
         
         self.aux_buttons = OrderedDict({
             "Load from file": self.load_config,
             "Save to file": self.save_config,
             "Next": self.next,
-            "Previous": self.previous,})
+            "Previous": self.previous,
+            })
 
         main_box = toga.Box(style=Pack(direction=COLUMN))
 
@@ -163,8 +165,18 @@ class BeeBeeware(toga.App):
         base_models_data = [f"Base palceholder {index}" for index in range(2)]
         lora_models_data = [f"lora placeholder {index}" for index in range(4)]
 
-        base_models_table = toga.Table(headings=["Base models"], data=base_models_data)
-        lora_models_table = toga.Table(headings=["Trainable model"], data=lora_models_data)
+        base_models_table = toga.Table(id="base_models", headings=["Base models"], data=base_models_data)
+        base_models_next = toga.Button(text="Next", on_press=self.aux_buttons["Next"](container=base_models_table))
+        base_models_prev = toga.Button(text="Previous", on_press=self.aux_buttons["Previous"](container=base_models_table))
+        base_buttons = toga.Box(id="base_buttons", style=Pack(direction=ROW), children=[base_models_prev, base_models_next])
+        base_models_box = toga.Box(id="base_box", style=Pack(direction=COLUMN), children=[base_models_table, base_buttons])
+
+        lora_models_table = toga.Table(id="lora_models", headings=["Trainable model"], data=lora_models_data)
+        lora_models_next = toga.Button(text="Next", on_press=self.aux_buttons["Next"](container=lora_models_table))
+        lora_models_prev = toga.Button(text="Previous", on_press=self.aux_buttons["Previous"](container=lora_models_table))
+        lora_buttons = toga.Box(id="lora_buttons", style=Pack(direction=ROW), children=[lora_models_prev, lora_models_next])
+        lora_models_box = toga.Box(id="lora_box", style=Pack(direction=COLUMN), children=[lora_models_table, lora_buttons])
+
         models = toga.SplitContainer(id="models", style=Pack(direction=COLUMN))
         models.content = [(base_models_table, self.preview_container_split["menu"]), (lora_models_table, self.preview_container_split["options"])]
         self.previews_container.content = models
@@ -197,10 +209,12 @@ class BeeBeeware(toga.App):
 
         self.previews_container.content = config_scroll
 
-    def next(self, widget) -> None:
+    @assign_container
+    def next(self, widget, container: Union[toga.Box, toga.Table]) -> Union[toga.Box, toga.Table]:
         raise NotImplementedError
 
-    def previous(self, widget) -> None:
+    @assign_container
+    def previous(self, widget, container: Union[toga.Box, toga.Table]) -> Union[toga.Box, toga.Table]:
         raise NotImplementedError
 
     def text_input(self, widget, window_name: str = "") -> toga.Window:
