@@ -12,7 +12,7 @@ import copy
 from decimal import Decimal
 from dataclasses import dataclass
 from typing import Coroutine
-from functools import partial
+from functools import partial, wraps
 
 from toga.style.pack import CENTER, COLUMN, ROW, Pack
 from toga.colors import WHITE, rgb
@@ -73,6 +73,17 @@ def get_models_page(total_number: int, page_num: int, per_page: int, pipeline_ta
     return models
 
 
+def assign_container(fun):
+
+    @wraps(fun)
+    def wrapper1(container):
+
+        def inner(instance, widget, *args, **kwargs):
+            return fun(instance, widget, container, *args, **kwargs)
+        return inner
+    
+    return wrapper1
+
 @dataclass
 class Config:
     config_path: Union[str, pathlib.Path] = ""
@@ -103,7 +114,10 @@ class BeeBeeware(toga.App):
         
         self.aux_buttons = OrderedDict({
             "Load from file": self.load_config,
-            "Save to file": self.save_config})
+            "Save to file": self.save_config,
+            "Next": self.next,
+            "Previous": self.previous,})
+
         main_box = toga.Box(style=Pack(direction=COLUMN))
 
         menu_previews_split = toga.SplitContainer(style=Pack(direction=COLUMN))
@@ -174,6 +188,12 @@ class BeeBeeware(toga.App):
         config_scroll.add(save_load_box)
 
         self.previews_container.content = config_scroll
+
+    def next(self, widget) -> None:
+        raise NotImplementedError
+
+    def previous(self, widget) -> None:
+        raise NotImplementedError
 
     def text_input(self, widget, window_name: str = "") -> toga.Window:
         default: dict[str, str] = {"Save": str(toga.paths.Paths().config), "Load": str(toga.paths.Paths().config)}
