@@ -43,6 +43,13 @@ def get_models(per_page: int, pipeline_tag: str, total_number: int, page_number:
 
         models_counter += 1
 
+        if not isinstance(page_number, int):
+            try:
+                page_number = int(page_number)
+            except TypeError as exception:
+                print(exception)
+                raise TypeError(f"Expected page number of the type int. Got {type(page_number)=}.") from exception
+
         if page_number > models_counter // per_page:
 
             continue
@@ -56,15 +63,15 @@ def get_models(per_page: int, pipeline_tag: str, total_number: int, page_number:
             yield ret
 
 
-def get_models_page(total_number: int, page_num: int, per_page: int, pipeline_tag: str = "text-to-image") -> list[str]:
+def get_models_page(total_number: int, page_num: int, per_page: int, pipeline_tag: str = "text-to-image") -> Union[list[str], None]:
 
     page_num = int(page_num)
-    models: list[str] = []
+    models: Union[list[str], None] = []
 
     if page_num <= 0:
         raise ValueError(f"Page number has to be greater than 0. Got {page_num=}")
 
-    models_generator: Generator[list[str], None, None] = get_models(per_page, pipeline_tag, total_number)
+    models_generator: Generator[Union[list[str], None], None, None] = get_models(per_page, pipeline_tag, total_number)
 
     models_generator.send(None)
 
@@ -81,8 +88,9 @@ def assign_container(fun):
         def inner(instance, widget, *args, **kwargs):
             return fun(instance, widget, container, *args, **kwargs)
         return inner
-    
+
     return wrapper1
+
 
 @dataclass
 class Config:
