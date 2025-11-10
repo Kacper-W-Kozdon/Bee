@@ -19,6 +19,7 @@ from toga.colors import WHITE, rgb
 from toga.constants import Baseline
 from toga.fonts import SANS_SERIF
 from toga.style import Pack
+from toga.sources import ListSource
 
 from typing import OrderedDict, Union, Optional, Generator
 from huggingface_hub import list_models
@@ -63,7 +64,7 @@ def get_models(per_page: int, pipeline_tag: str, total_number: int, page_number:
             yield ret
 
 
-def get_models_page(total_number: int, page_num: int, per_page: int, pipeline_tag: str = "text-to-image") -> Union[list[str], None]:
+def get_models_page(total_number: int = 100, page_num: int = 1, per_page: int = 5, pipeline_tag: str = "text-to-image") -> Union[list[str], None]:
 
     page_num = int(page_num)
     models: Union[list[str], None] = []
@@ -81,15 +82,48 @@ def get_models_page(total_number: int, page_num: int, per_page: int, pipeline_ta
 
 
 def assign_container(fun):
+    print(f"{fun.__name__=}")
 
     @wraps(fun)
-    def outer(container=None):
+    def outer(instance, container = None, page_id = None):
+        # print(f"{container=}")
+        # print(f"{instance=}")
 
-        def inner(instance, widget, *args, **kwargs):
-            return fun(instance, widget, *args, container=container, **kwargs)
+        def inner(widget, instance=instance):
+            return fun(instance, widget, container=container, page_id=page_id)
         return inner
 
     return outer
+
+
+def get_next(widget: toga.Widget, page: int) -> Union[None, toga.Widget]:
+    next_widget: toga.Widget
+
+    if not isinstance(widget, toga.Widget):
+        raise TypeError(f"The widget's type is incorrect. Expected toga.Widget, got {type(widget)=}")
+
+    match widget.id:
+        case "base_models": 
+            next_widget_data = get_models_page(page_num=page)
+            next_widget = toga.Table(headings=widget.headings, data=next_widget_data)
+
+    raise NotImplementedError
+    return next_widget
+
+
+def get_previous(widget: toga.Widget, page: int) -> Union[None, toga.Widget]:
+    previous_widget: toga.Widget
+
+    if not isinstance(widget, toga.Widget):
+        raise TypeError(f"The widget's type is incorrect. Expected toga.Widget, got {type(widget)=}")
+
+    match widget.id:
+        case "base_models": 
+            previous_widget_data = get_models_page(page_num=page)
+            previous_widget = toga.Table(headings=widget.headings, data=previous_widget_data)
+        
+    raise NotImplementedError
+    return previous_widget
 
 
 @dataclass
@@ -165,20 +199,22 @@ class BeeBeeware(toga.App):
         base_models_data = [f"Base palceholder {index}" for index in range(2)]
         lora_models_data = [f"lora placeholder {index}" for index in range(4)]
 
+        base_page = toga.Label("1", id="base_page")
         base_models_table = toga.Table(id="base_models", headings=["Base models"], data=base_models_data)
-        base_models_next = toga.Button(text="Next", on_press=self.aux_buttons["Next"](container=base_models_table))
-        base_models_prev = toga.Button(text="Previous", on_press=self.aux_buttons["Previous"](container=base_models_table))
-        base_buttons = toga.Box(id="base_buttons", style=Pack(direction=ROW), children=[base_models_prev, base_models_next])
+        base_models_next = toga.Button(text="Next", on_press=self.aux_buttons["Next"](container=base_models_table, page_id=base_page.id))
+        base_models_prev = toga.Button(text="Previous", on_press=self.aux_buttons["Previous"](container=base_models_table, page_id=base_page.id))
+        base_buttons = toga.Box(id="base_buttons", style=Pack(direction=ROW), children=[base_models_prev, base_page, base_models_next])
         base_models_box = toga.Box(id="base_box", style=Pack(direction=COLUMN), children=[base_models_table, base_buttons])
-
+        
+        lora_page = toga.Label("1", id="lora_page")
         lora_models_table = toga.Table(id="lora_models", headings=["Trainable model"], data=lora_models_data)
-        lora_models_next = toga.Button(text="Next", on_press=self.aux_buttons["Next"](container=lora_models_table))
-        lora_models_prev = toga.Button(text="Previous", on_press=self.aux_buttons["Previous"](container=lora_models_table))
-        lora_buttons = toga.Box(id="lora_buttons", style=Pack(direction=ROW), children=[lora_models_prev, lora_models_next])
+        lora_models_next = toga.Button(text="Next", on_press=self.aux_buttons["Next"](container=lora_models_table, page_id=lora_page.id))
+        lora_models_prev = toga.Button(text="Previous", on_press=self.aux_buttons["Previous"](container=lora_models_table, page_id=lora_page.id))
+        lora_buttons = toga.Box(id="lora_buttons", style=Pack(direction=ROW), children=[lora_models_prev, lora_page, lora_models_next])
         lora_models_box = toga.Box(id="lora_box", style=Pack(direction=COLUMN), children=[lora_models_table, lora_buttons])
 
         models = toga.SplitContainer(id="models", style=Pack(direction=COLUMN))
-        models.content = [(base_models_table, self.preview_container_split["menu"]), (lora_models_table, self.preview_container_split["options"])]
+        models.content = [(base_models_box, self.preview_container_split["menu"]), (lora_models_box, self.preview_container_split["options"])]
         self.previews_container.content = models
 
     def preview_config(self, widget):
@@ -210,14 +246,50 @@ class BeeBeeware(toga.App):
         self.previews_container.content = config_scroll
 
     @assign_container
-    def next(self, widget, container: Union[toga.Box, toga.Table, None] = None) -> Union[toga.Box, toga.Table]:
-        print(f"{container.id=}, {container.id in self.main_window.content.children=}")
-        raise NotImplementedError
+    def next(self, widget, container: Union[toga.Box, toga.Table, None] = None, page_id: Union[None, str] = None) -> Union[toga.Box, toga.Table, None]:
+        # print(f"{container.id=}, {container.id in self.main_window.content.children=}")
+        data = ["Next test 1", "Next test 2"]
+        headings = ["Base models"]
+        # print(f"{self.main_window.widgets[container.id]=}")
+        # print(f"{self.main_window.widgets[container.id].data=}")
+        page = max(int(self.main_window.widgets[page_id].text) + 1, 1)
+
+        # next_view = toga.Table(headings=headings, data=data)
+        
+        old_view = self.main_window.widgets[container.id]
+        next_view = get_next(old_view, page)
+
+        self.main_window.widgets[container.id].parent.replace(old_view, next_view)
+        # for item in data:
+        #     self.main_window.widgets[container.id].data.append(item)
+        
+        self.main_window.widgets[page_id].text = str(int(page))
+        # print(f"{dir(self.main_window.widgets)=}")
+        self.main_window.show()
+        return NotImplemented
 
     @assign_container
-    def previous(self, widget, container: Union[toga.Box, toga.Table, None] = None) -> Union[toga.Box, toga.Table]:
-        print(f"{container.id=}, {container.id in self.main_window.content.children=}")
-        raise NotImplementedError
+    def previous(self, widget, container: Union[toga.Box, toga.Table, None] = None, page_id: [None, str] = None) -> Union[toga.Box, toga.Table, None]:
+        # print(f"{container.id=}, {container.id in self.main_window.content.children=}")
+        data = ["Next test 1", "Next test 2"]
+        headings = ["Base models"]
+        # print(f"{self.main_window.widgets[container.id]=}")
+        # print(f"{self.main_window.widgets[container.id].data=}")
+        page = max(int(self.main_window.widgets[page_id].text) - 1, 1)
+
+        # prev_view = toga.Table(headings=headings, data=data)
+        
+        old_view = self.main_window.widgets[container.id]
+        prev_view = get_previous(old_view, page)
+
+        self.main_window.widgets[container.id].parent.replace(old_view, prev_view)
+        # for item in data:
+        #     self.main_window.widgets[container.id].data.append(item)
+        
+        self.main_window.widgets[page_id].text = str(int(page))
+        # print(f"{dir(self.main_window.widgets)=}")
+        self.main_window.show()
+        return NotImplemented
 
     def text_input(self, widget, window_name: str = "") -> toga.Window:
         default: dict[str, str] = {"Save": str(toga.paths.Paths().config), "Load": str(toga.paths.Paths().config)}
