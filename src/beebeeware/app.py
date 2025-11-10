@@ -211,10 +211,12 @@ class BeeBeeware(toga.App):
 
     @assign_container
     def next(self, widget, container: Union[toga.Box, toga.Table]) -> Union[toga.Box, toga.Table]:
+        print(f"{container.id=}, {container.id in self.main_window.content.children=}")
         raise NotImplementedError
 
     @assign_container
     def previous(self, widget, container: Union[toga.Box, toga.Table]) -> Union[toga.Box, toga.Table]:
+        print(f"{container.id=}, {container.id in self.main_window.content.children=}")
         raise NotImplementedError
 
     def text_input(self, widget, window_name: str = "") -> toga.Window:
