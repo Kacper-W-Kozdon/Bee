@@ -196,7 +196,8 @@ class BeeBeeware(toga.App):
         self.main_window.show()
 
     def preview_model_menu(self, widget) -> None:
-        base_models_data = [f"Base palceholder {index}" for index in range(2)]
+
+        base_models_data = get_models_page(page_num=1)
         lora_models_data = [f"lora placeholder {index}" for index in range(4)]
 
         base_page = toga.Label("1", id="base_page")
