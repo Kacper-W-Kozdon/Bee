@@ -105,9 +105,8 @@ def get_next(widget: toga.Widget, page: int) -> Union[None, toga.Widget]:
     match widget.id:
         case "base_models": 
             next_widget_data = get_models_page(page_num=page)
-            next_widget = toga.Table(headings=widget.headings, data=next_widget_data)
+            next_widget = toga.Table(id=widget.id, headings=widget.headings, data=next_widget_data)
 
-    raise NotImplementedError
     return next_widget
 
 
@@ -120,9 +119,8 @@ def get_previous(widget: toga.Widget, page: int) -> Union[None, toga.Widget]:
     match widget.id:
         case "base_models": 
             previous_widget_data = get_models_page(page_num=page)
-            previous_widget = toga.Table(headings=widget.headings, data=previous_widget_data)
+            previous_widget = toga.Table(id=widget.id, headings=widget.headings, data=previous_widget_data)
         
-    raise NotImplementedError
     return previous_widget
 
 
