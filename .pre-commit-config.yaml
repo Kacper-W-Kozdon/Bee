@@ -1,0 +1,61 @@
+default_language_version:
+  python: python3.9
+
+default_stages: [commit]
+default_install_hook_types: [pre-commit, commit-msg]
+
+repos:
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.11
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/timothycrosley/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        additional_dependencies: [toml]
+        args:
+          [
+            "--profile=black",
+            "--py=auto",
+            "--line-length=120",
+            "--multi-line=3",
+            "--trailing-comma",
+            "--force-grid-wrap=0",
+            "--use-parentheses",
+            "--ensure-newline-before-comments",
+            "--project=CORE,src,config,preprocess,train,transform,main,model",
+            "--config-root=.",
+            "--resolve-all-configs",
+          ]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0
+    hooks:
+      - id: check-yaml
+        args: ["--allow-multiple-documents", "--unsafe"]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-docstring-first
+      - id: check-toml
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: requirements-txt-fixer
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: pretty-format-json
+        args:
+          - "--autofix"
+          - "--indent=2"
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.0.3
+    hooks:
+      - id: prettier
+        additional_dependencies:
+          - prettier@2.1.2
+          - "@prettier/plugin-xml@0.12.0"

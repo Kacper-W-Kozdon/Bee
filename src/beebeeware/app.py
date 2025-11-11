@@ -20,14 +20,17 @@ from toga.constants import Baseline
 from toga.fonts import SANS_SERIF
 from toga.style import Pack
 from toga.sources import ListSource
+from toga.widgets.table import OnSelectHandler
 
 from typing import OrderedDict, Union, Optional, Generator
 from huggingface_hub import list_models
 
 
-def get_models(per_page: int, pipeline_tag: str, total_number: int, page_number: Union[int, None] = None) -> Generator[Union[list[str], None], None, None]:
+def get_models(per_page: int, pipeline_tag: str, total_number: int, page_number: Union[int, None] = None, tags: Union[list[str], None] = None) -> Generator[Union[list[str], None], None, None]:
 
-    models = list_models()
+    filtr = copy.copy(tags) or []
+    filtr.append(pipeline_tag)
+    models = list_models(filter=filtr)
     models_list: list[str] = []
     models_counter: int = 0
 
@@ -64,7 +67,7 @@ def get_models(per_page: int, pipeline_tag: str, total_number: int, page_number:
             yield ret
 
 
-def get_models_page(total_number: int = 100, page_num: int = 1, per_page: int = 5, pipeline_tag: str = "text-to-image") -> Union[list[str], None]:
+def get_models_page(total_number: int = 100, page_num: int = 1, per_page: int = 5, pipeline_tag: str = "text-to-image", tags: Union[list[str], None] = None) -> Union[list[str], None]:
 
     page_num = int(page_num)
     models: Union[list[str], None] = []
@@ -72,7 +75,7 @@ def get_models_page(total_number: int = 100, page_num: int = 1, per_page: int = 
     if page_num <= 0:
         raise ValueError(f"Page number has to be greater than 0. Got {page_num=}")
 
-    models_generator: Generator[Union[list[str], None], None, None] = get_models(per_page, pipeline_tag, total_number)
+    models_generator: Generator[Union[list[str], None], None, None] = get_models(per_page, pipeline_tag, total_number, tags=tags)
 
     models_generator.send(None)
 
@@ -97,28 +100,34 @@ def assign_container(fun):
 
 
 def get_next(widget: toga.Widget, page: int) -> Union[None, toga.Widget]:
-    next_widget: toga.Widget
+    next_widget: Union[toga.Widget, None] = None
 
     if not isinstance(widget, toga.Widget):
         raise TypeError(f"The widget's type is incorrect. Expected toga.Widget, got {type(widget)=}")
 
     match widget.id:
-        case "base_models": 
+        case "base_models":
             next_widget_data = get_models_page(page_num=page)
+            next_widget = toga.Table(id=widget.id, headings=widget.headings, data=next_widget_data)
+        case "lora_models":
+            next_widget_data = get_models_page(page_num=page, tags=["lora"])
             next_widget = toga.Table(id=widget.id, headings=widget.headings, data=next_widget_data)
 
     return next_widget
 
 
 def get_previous(widget: toga.Widget, page: int) -> Union[None, toga.Widget]:
-    previous_widget: toga.Widget
+    previous_widget: Union[toga.Widget, None] = None
 
     if not isinstance(widget, toga.Widget):
         raise TypeError(f"The widget's type is incorrect. Expected toga.Widget, got {type(widget)=}")
 
     match widget.id:
-        case "base_models": 
+        case "base_models":
             previous_widget_data = get_models_page(page_num=page)
+            previous_widget = toga.Table(id=widget.id, headings=widget.headings, data=previous_widget_data)
+        case "lora_models":
+            previous_widget_data = get_models_page(page_num=page, tags=["lora"])
             previous_widget = toga.Table(id=widget.id, headings=widget.headings, data=previous_widget_data)
         
     return previous_widget
@@ -137,6 +146,7 @@ class BeeBeeware(toga.App):
     main_window_split = {"menu": 1, "previews": 2}
     preview_container_split = {"menu": 1, "options": 1}
     text_input_box: toga.TextInput
+    config: OrderedDict[str, Union[str, None]] = OrderedDict({"base_model": None, "lora_model": None})
 
     def startup(self):
         """Construct and show the Toga application.
@@ -196,21 +206,51 @@ class BeeBeeware(toga.App):
     def preview_model_menu(self, widget) -> None:
 
         base_models_data = get_models_page(page_num=1)
-        lora_models_data = [f"lora placeholder {index}" for index in range(4)]
+        lora_models_data = get_models_page(page_num=1, tags=["lora"])
+
+        class Base_Select(OnSelectHandler):
+
+            def __init__(self, config: OrderedDict[str, Union[str, None]]):
+                self.config = config
+                super().__init__()
+
+            def __call__(self, widget, **kwargs) -> None:
+                base = copy.copy(widget.selection.base_models)
+                widget.window.widgets["base_picked"].value = base
+                self.config.update({"base_model": base})
+        
+        class Lora_Select(OnSelectHandler):
+            def __init__(self, config: OrderedDict[str, Union[str, None]]):
+                self.config = config
+                super().__init__()
+
+            def __call__(self, widget, **kwargs) -> None:
+                lora = copy.copy(widget.selection.lora_models)
+                widget.window.widgets["lora_picked"].value = lora
+                self.config.update({"lora_model": lora})
+            
+        base_select = Base_Select(self.config)
+        lora_select = Lora_Select(self.config)
 
         base_page = toga.Label("1", id="base_page")
-        base_models_table = toga.Table(id="base_models", headings=["Base models"], data=base_models_data)
+        base_models_table = toga.Table(id="base_models", headings=["Base models"], data=base_models_data, on_select=base_select)
         base_models_next = toga.Button(text="Next", on_press=self.aux_buttons["Next"](container=base_models_table, page_id=base_page.id))
         base_models_prev = toga.Button(text="Previous", on_press=self.aux_buttons["Previous"](container=base_models_table, page_id=base_page.id))
         base_buttons = toga.Box(id="base_buttons", style=Pack(direction=ROW), children=[base_models_prev, base_page, base_models_next])
-        base_models_box = toga.Box(id="base_box", style=Pack(direction=COLUMN), children=[base_models_table, base_buttons])
+        base_picked_label = toga.Label("Base:")
+        base_picked_model = toga.TextInput(id="base_picked", readonly=True, value=self.config["base_model"])
+        base_picked = toga.Box(style=Pack(direction=ROW), children=[base_picked_label, base_picked_model])
+        base_models_box = toga.Box(id="base_box", style=Pack(direction=COLUMN), children=[base_models_table, base_buttons, base_picked])
         
         lora_page = toga.Label("1", id="lora_page")
-        lora_models_table = toga.Table(id="lora_models", headings=["Trainable model"], data=lora_models_data)
+        lora_models_table = toga.Table(id="lora_models", headings=["Trainable model"], data=lora_models_data, on_select=lora_select)
         lora_models_next = toga.Button(text="Next", on_press=self.aux_buttons["Next"](container=lora_models_table, page_id=lora_page.id))
         lora_models_prev = toga.Button(text="Previous", on_press=self.aux_buttons["Previous"](container=lora_models_table, page_id=lora_page.id))
         lora_buttons = toga.Box(id="lora_buttons", style=Pack(direction=ROW), children=[lora_models_prev, lora_page, lora_models_next])
-        lora_models_box = toga.Box(id="lora_box", style=Pack(direction=COLUMN), children=[lora_models_table, lora_buttons])
+        lora_picked_label = toga.Label("Lora:")
+        lora_picked_model = toga.TextInput(id="lora_picked", readonly=True, value=self.config["lora_model"])
+        lora_picked = toga.Box(style=Pack(direction=ROW), children=[lora_picked_label, lora_picked_model])
+        lora_models_box = toga.Box(id="lora_box", style=Pack(direction=COLUMN), children=[lora_models_table, lora_buttons, lora_picked])
 
         models = toga.SplitContainer(id="models", style=Pack(direction=COLUMN))
         models.content = [(base_models_box, self.preview_container_split["menu"]), (lora_models_box, self.preview_container_split["options"])]
@@ -249,7 +289,7 @@ class BeeBeeware(toga.App):
         # print(f"{container.id=}, {container.id in self.main_window.content.children=}")
         data = ["Next test 1", "Next test 2"]
         headings = ["Base models"]
-        # print(f"{self.main_window.widgets[container.id]=}")
+        print(f"{self.main_window.widgets[container.id].parent=}")
         # print(f"{self.main_window.widgets[container.id].data=}")
         page = max(int(self.main_window.widgets[page_id].text) + 1, 1)
 
@@ -257,6 +297,14 @@ class BeeBeeware(toga.App):
         
         old_view = self.main_window.widgets[container.id]
         next_view = get_next(old_view, page)
+        if next_view is None:
+            self.main_window.dialog(
+                toga.InfoDialog(
+                    "Error",
+                    "Could not retrieve the next view."
+                )
+            )
+            raise TypeError(f"Next view is expected to be of the type toga.Widget. Got {type(next_view)}")
 
         self.main_window.widgets[container.id].parent.replace(old_view, next_view)
         # for item in data:
@@ -265,7 +313,7 @@ class BeeBeeware(toga.App):
         self.main_window.widgets[page_id].text = str(int(page))
         # print(f"{dir(self.main_window.widgets)=}")
         self.main_window.show()
-        return NotImplemented
+        return next_view
 
     @assign_container
     def previous(self, widget, container: Union[toga.Box, toga.Table, None] = None, page_id: [None, str] = None) -> Union[toga.Box, toga.Table, None]:
@@ -280,6 +328,14 @@ class BeeBeeware(toga.App):
         
         old_view = self.main_window.widgets[container.id]
         prev_view = get_previous(old_view, page)
+        if prev_view is None:
+            self.main_window.dialog(
+                toga.InfoDialog(
+                    "Error",
+                    "Could not retrieve the previous view."
+                )
+            )
+            raise TypeError(f"Next view is expected to be of the type toga.Widget. Got {type(prev_view)}")
 
         self.main_window.widgets[container.id].parent.replace(old_view, prev_view)
         # for item in data:
@@ -288,7 +344,7 @@ class BeeBeeware(toga.App):
         self.main_window.widgets[page_id].text = str(int(page))
         # print(f"{dir(self.main_window.widgets)=}")
         self.main_window.show()
-        return NotImplemented
+        return prev_view
 
     def text_input(self, widget, window_name: str = "") -> toga.Window:
         default: dict[str, str] = {"Save": str(toga.paths.Paths().config), "Load": str(toga.paths.Paths().config)}
