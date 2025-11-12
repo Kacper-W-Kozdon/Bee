@@ -182,6 +182,7 @@ class BeeBeeware(toga.App):
             {
                 "Model": self.preview_model_menu,
                 "Config": self.preview_config,
+                "Summary": self.preview_summary,
             }
         )
 
@@ -207,7 +208,7 @@ class BeeBeeware(toga.App):
                 )
             )
 
-        previews = toga.Box(style=Pack(direction=COLUMN, alignment=CENTER))
+        previews = toga.Box(style=Pack(direction=COLUMN))
         self.previews_container = toga.ScrollContainer(
             id="previews_container", horizontal=False, style=Pack(direction=COLUMN)
         )
@@ -250,12 +251,12 @@ class BeeBeeware(toga.App):
                 super().__init__()
 
             def __call__(self, widget, **kwargs) -> None:
-                lora = copy.copy(widget.selection.lora_models)
+                lora = copy.copy(widget.selection.trainable_model)
                 widget.window.widgets["lora_picked"].value = lora
                 self.config.update({"lora_model": lora})
 
-        base_select = Base_Select(self.config)
         lora_select = Lora_Select(self.config)
+        base_select = Base_Select(self.config)
 
         base_page = toga.Label("1", id="base_page")
         base_models_table = toga.Table(
@@ -370,6 +371,18 @@ class BeeBeeware(toga.App):
         config_scroll.add(save_load_box)
 
         self.previews_container.content = config_scroll
+
+    def preview_summary(self, widget) -> None:
+        summary_preview = toga.Box(id="summary_preview", style=Pack(direction=COLUMN))
+        for config_label, config_value in self.config.items():
+            label = toga.Label(config_label)
+            value = toga.TextInput(
+                readonly=True, value=config_value, style=Pack(direction=COLUMN)
+            )
+            config_box = toga.Box(style=Pack(direction=ROW), children=[label, value])
+            summary_preview.add(config_box)
+
+        self.previews_container.content = summary_preview
 
     @assign_container
     def next(
