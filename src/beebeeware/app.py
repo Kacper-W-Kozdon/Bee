@@ -153,19 +153,31 @@ def get_previous(widget: toga.Widget, page: int) -> Union[None, toga.Widget]:
 
 
 @dataclass
+class Config_Option:
+    value: Union[str, int, float, None, pathlib.Path]
+    readonly: bool = False
+
+
+@dataclass
 class Config:
     config_path: Union[str, pathlib.Path] = ""
-    placholder_option_1: str = ""
-    placeholder_option_2: str = ""
+    base_model: Union[str, None] = None
+    lora_model: Union[str, None] = None
+    placeholder: str = ""
+
+
+main_config = Config()
 
 
 class BeeBeeware(toga.App):
     placeholder_text = "Placeholder"
     main_window_split = {"menu": 1, "previews": 2}
     preview_container_split = {"menu": 1, "options": 1}
-    text_input_box: toga.TextInput
     config: OrderedDict[str, Union[str, None]] = OrderedDict(
-        {"base_model": None, "lora_model": None}
+        {
+            config_name: config_value
+            for config_name, config_value in main_config.__dict__.items()
+        }
     )
 
     def startup(self):
@@ -342,8 +354,8 @@ class BeeBeeware(toga.App):
     def preview_config(self, widget):
         config = OrderedDict(
             {
-                "Placeholder 1": toga.NumberInput(min=0, max=10, step=0.1, value=1),
-                "Placeholder 2": toga.NumberInput(min=0, max=10, step=0.1, value=1),
+                config_name: toga.NumberInput(min=0, max=10, step=0.1, value=1)
+                for config_name, _ in self.config.items()
             }
         )
 
@@ -509,8 +521,8 @@ class BeeBeeware(toga.App):
             if not config_path.exists() and (config_path is not None):
                 print(f"Creating {config_path=}")
                 pathlib.Path(f"{config_path}\\").mkdir()
-                placeholder = {"configs": None}
-                json_configs = json.dumps(placeholder)
+                model_config = self.config
+                json_configs = json.dumps(model_config)
 
                 with open(
                     pathlib.Path(f"{config_path}\\beeconfig.json"), "+w"
@@ -538,8 +550,8 @@ class BeeBeeware(toga.App):
             if not config_path.exists() and (config_path is not None):
                 print(f"Creating {config_path=}")
                 pathlib.Path(f"{config_path}\\").mkdir()
-                placeholder = {"configs": None}
-                json_configs = json.dumps(placeholder)
+                model_config = self.config
+                json_configs = json.dumps(model_config)
 
                 with open(
                     pathlib.Path(f"{config_path}\\beeconfig.json"), "+w"
