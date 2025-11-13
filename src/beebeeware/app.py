@@ -152,7 +152,6 @@ def get_previous(widget: toga.Widget, page: int) -> Union[None, toga.Widget]:
     return previous_widget
 
 
-@dataclass
 class Config_Meta(type):
     @classmethod
     def __prepare__(mcs, cls, *args, **kwargs):
@@ -165,11 +164,30 @@ class Config_Meta(type):
 
 
 @dataclass
-class Config:
-    config_path: Union[str, pathlib.Path] = ""
-    base_model: Union[str, None] = None
-    lora_model: Union[str, None] = None
-    placeholder: str = ""
+class Config_Base(type):
+    config_path: tuple[Union[str, pathlib.Path], bool] = "", False
+    base_model: tuple[Union[str, None], bool] = None, False
+    lora_model: tuple[Union[str, None], bool] = None, False
+    placeholder: tuple[str, bool] = "", True
+
+
+class Config(metaclass=Config_Meta):
+    __metaclass__ = Config_Meta
+    __base__ = Config_Base
+    __locked_names__ = ["config_path", "base_model", "lora_model"]
+
+    def __new__(cls, *args, **kwargs):
+        for name, value in cls.__base__.__dict__.items():
+            bases = type(value)
+            if name in cls.__locked_names__:
+                pass
+            namespace = {name: value}
+            meta_type = cls.__metaclass__(cls.__name__, bases, namespace)  # noqa: F841
+
+        raise NotImplementedError
+
+    def __init__(self, *args, **kwargs):
+        raise NotImplementedError
 
 
 main_config = Config()
