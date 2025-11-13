@@ -153,9 +153,15 @@ def get_previous(widget: toga.Widget, page: int) -> Union[None, toga.Widget]:
 
 
 @dataclass
-class Config_Option:
-    value: Union[str, int, float, None, pathlib.Path]
-    readonly: bool = False
+class Config_Meta(type):
+    @classmethod
+    def __prepare__(mcs, cls, *args, **kwargs):
+        # value: Union[str, int, float, None, pathlib.Path]
+        # readonly: bool = False
+        raise NotImplementedError
+
+    def __new__(mcs, cls, bases, namespace, *args, **kwargs):
+        raise NotImplementedError
 
 
 @dataclass
