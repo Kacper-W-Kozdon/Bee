@@ -5,9 +5,9 @@ An app for Bee.
 import copy
 import json
 import pathlib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import partial, wraps
-from typing import Generator, OrderedDict, Union
+from typing import Callable, Generator, OrderedDict, Union
 
 import toga
 import toga.paths
@@ -152,42 +152,18 @@ def get_previous(widget: toga.Widget, page: int) -> Union[None, toga.Widget]:
     return previous_widget
 
 
-class Config_Meta(type):
-    @classmethod
-    def __prepare__(mcs, cls, *args, **kwargs):
-        # value: Union[str, int, float, None, pathlib.Path]
-        # readonly: bool = False
-        raise NotImplementedError
-
-    def __new__(mcs, cls, bases, namespace, *args, **kwargs):
-        raise NotImplementedError
+no_preview_list: Callable[..., list[str]] = lambda: list(  # noqa: E731
+    ["no_preview", "config_path", "base_model", "lora_model"]
+)
 
 
 @dataclass
-class Config_Base(type):
-    config_path: tuple[Union[str, pathlib.Path], bool] = "", False
-    base_model: tuple[Union[str, None], bool] = None, False
-    lora_model: tuple[Union[str, None], bool] = None, False
-    placeholder: tuple[str, bool] = "", True
-
-
-class Config(metaclass=Config_Meta):
-    __metaclass__ = Config_Meta
-    __base__ = Config_Base
-    __locked_names__ = ["config_path", "base_model", "lora_model"]
-
-    def __new__(cls, *args, **kwargs):
-        for name, value in cls.__base__.__dict__.items():
-            bases = type(value)
-            if name in cls.__locked_names__:
-                pass
-            namespace = {name: value}
-            meta_type = cls.__metaclass__(cls.__name__, bases, namespace)  # noqa: F841
-
-        raise NotImplementedError
-
-    def __init__(self, *args, **kwargs):
-        raise NotImplementedError
+class Config:
+    no_preview: list[str] = field(default_factory=no_preview_list)
+    config_path: Union[str, pathlib.Path] = ""
+    base_model: Union[str, None] = None
+    lora_model: Union[str, None] = None
+    placeholder: str = ""
 
 
 main_config = Config()
@@ -380,6 +356,7 @@ class BeeBeeware(toga.App):
             {
                 config_name: toga.NumberInput(min=0, max=10, step=0.1, value=1)
                 for config_name, _ in self.config.items()
+                if config_name not in self.config["no_preview"]
             }
         )
 
@@ -411,6 +388,9 @@ class BeeBeeware(toga.App):
     def preview_summary(self, widget) -> None:
         summary_preview = toga.Box(id="summary_preview", style=Pack(direction=COLUMN))
         for config_label, config_value in self.config.items():
+            if config_label == "no_preview":
+                continue
+
             label = toga.Label(config_label)
             value = toga.TextInput(
                 readonly=True, value=config_value, style=Pack(direction=COLUMN)
