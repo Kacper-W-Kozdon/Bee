@@ -21,53 +21,58 @@ from toga.fonts import SANS_SERIF
 from toga.style.pack import CENTER, COLUMN, ROW, Pack
 from toga.widgets.table import OnSelectHandler
 
-pipe = StableDiffusionPipeline
-# dir_dict_config = [entry for entry in dir(pipe) if "config" in entry]
-# print(dir_dict_config)
-config = pipe.load_config(
-    "stable-diffusion-v1-5/stable-diffusion-v1-5", return_unused_kwargs=True
-)
-# print(config)
-sig = inspect.signature(pipe.__call__)
-params = sig.parameters
 
-# params_dict = {param_name: (getattr(param_data.annotation, "get_args", None), param_data.default) for param_name, param_data in params.items()}
+def update_config(
+    model_id: Union[str, None] = None,
+) -> OrderedDict[str, Union[str, int, float, None, list, dict]]:
+    pipe = StableDiffusionPipeline
+    # dir_dict_config = [entry for entry in dir(pipe) if "config" in entry]
+    # print(dir_dict_config)
+    pipe_config = pipe.load_config(model_id, return_unused_kwargs=True)  # noqa: F841
+    # print(config)
+    sig = inspect.signature(pipe.__call__)
+    params = sig.parameters
 
-params_dict = {}
-types = [list, int, str, float, dict]
+    # params_dict = {param_name: (getattr(param_data.annotation, "get_args", None), param_data.default) for param_name, param_data in params.items()}
 
-for param_name, param_data in params.items():
-    if param_name in [
-        "self",
-        "kwargs",
-        "callback_on_step_end_tensor_inputs",
-        "ip_adapter_image",
-        "latents",
-        "generator",
-    ]:
-        continue
+    params_dict = {}
+    types = [list, int, str, float, dict]
 
-    default = param_data.default
+    for param_name, param_data in params.items():
+        if param_name in [
+            "self",
+            "kwargs",
+            "callback_on_step_end_tensor_inputs",
+            "ip_adapter_image",
+            "latents",
+            "generator",
+        ]:
+            continue
 
-    if typing.get_origin(param_data.annotation) is typing.Union:
-        annotations = typing.get_args(param_data.annotation)
-        annotations_out = [
-            typing.get_origin(annotation) or annotation for annotation in annotations
-        ]
+        default = param_data.default
 
-    else:
-        annotations = param_data.annotation
-        annotations_out = [annotations]
+        if typing.get_origin(param_data.annotation) is typing.Union:
+            annotations = typing.get_args(param_data.annotation)
+            annotations_out = [
+                typing.get_origin(annotation) or annotation
+                for annotation in annotations
+            ]
 
-    if not any(
-        [
-            (annotation in types) or (typing.get_origin(annotation) in types)
-            for annotation in annotations_out
-        ]
-    ):
-        continue
+        else:
+            annotations = param_data.annotation
+            annotations_out = [annotations]
 
-    params_dict[param_name] = (annotations_out, default)
+        if not any(
+            [
+                (annotation in types) or (typing.get_origin(annotation) in types)
+                for annotation in annotations_out
+            ]
+        ):
+            continue
+
+        params_dict[param_name] = (annotations_out, default)
+
+    return OrderedDict(params_dict)
 
 
 def get_models(
@@ -115,6 +120,18 @@ def get_models(
             ret = models_list.copy()
             models_list = []
             yield ret
+
+
+def get_default_base_and_lora(
+    pipeline_tag: Union[str, None] = None, tags: Union[list[str], None] = None
+) -> tuple[str, str]:
+    lora_filtr = copy.copy(tags) or []
+    lora_filtr.append(str(pipeline_tag))
+    base_filtr = [str(pipeline_tag)]
+
+    base = [model.id for model in list_models(filter=base_filtr, limit=1)][0]
+    lora = [model.id for model in list_models(filter=lora_filtr, limit=1)][0]
+    return base, lora
 
 
 def get_models_page(
@@ -212,8 +229,12 @@ no_preview_list: Callable[..., list[str]] = lambda: list(  # noqa: E731
 class Config:
     no_preview: list[str] = field(default_factory=no_preview_list)
     config_path: Union[str, pathlib.Path] = ""
-    base_model: Union[str, None] = None
-    lora_model: Union[str, None] = None
+    base_model: Union[str, None] = get_default_base_and_lora("text-to-image", ["lora"])[
+        0
+    ]
+    lora_model: Union[str, None] = get_default_base_and_lora("text-to-image", ["lora"])[
+        1
+    ]
     placeholder: str = ""
 
 
@@ -410,6 +431,14 @@ class BeeBeeware(toga.App):
                 if config_name not in self.config["no_preview"]
             }
         )
+
+        base_model = self.config.get("base_model")
+        # lora_model = self.config.get("lora_model")
+
+        model_configs: OrderedDict[
+            str, Union[str, int, float, list, dict, None]
+        ] = update_config(model_id=base_model)
+        config.update(model_configs)  # type: ignore
 
         config_scroll = toga.Box(id="config", style=Pack(direction=COLUMN))
         save_button = toga.Button(
