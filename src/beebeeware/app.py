@@ -3,20 +3,71 @@ An app for Bee.
 """
 
 import copy
+import inspect
 import json
 import pathlib
+import typing
 from dataclasses import dataclass, field
 from functools import partial, wraps
 from typing import Callable, Generator, OrderedDict, Union
 
 import toga
 import toga.paths
+from diffusers import StableDiffusionPipeline
 from huggingface_hub import list_models
 from toga.colors import rgb
 from toga.constants import Baseline
 from toga.fonts import SANS_SERIF
 from toga.style.pack import CENTER, COLUMN, ROW, Pack
 from toga.widgets.table import OnSelectHandler
+
+pipe = StableDiffusionPipeline
+# dir_dict_config = [entry for entry in dir(pipe) if "config" in entry]
+# print(dir_dict_config)
+config = pipe.load_config(
+    "stable-diffusion-v1-5/stable-diffusion-v1-5", return_unused_kwargs=True
+)
+# print(config)
+sig = inspect.signature(pipe.__call__)
+params = sig.parameters
+
+# params_dict = {param_name: (getattr(param_data.annotation, "get_args", None), param_data.default) for param_name, param_data in params.items()}
+
+params_dict = {}
+types = [list, int, str, float, dict]
+
+for param_name, param_data in params.items():
+    if param_name in [
+        "self",
+        "kwargs",
+        "callback_on_step_end_tensor_inputs",
+        "ip_adapter_image",
+        "latents",
+        "generator",
+    ]:
+        continue
+
+    default = param_data.default
+
+    if typing.get_origin(param_data.annotation) is typing.Union:
+        annotations = typing.get_args(param_data.annotation)
+        annotations_out = [
+            typing.get_origin(annotation) or annotation for annotation in annotations
+        ]
+
+    else:
+        annotations = param_data.annotation
+        annotations_out = [annotations]
+
+    if not any(
+        [
+            (annotation in types) or (typing.get_origin(annotation) in types)
+            for annotation in annotations_out
+        ]
+    ):
+        continue
+
+    params_dict[param_name] = (annotations_out, default)
 
 
 def get_models(

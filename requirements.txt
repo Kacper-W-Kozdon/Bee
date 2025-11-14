@@ -1,3 +1,6 @@
-toga
 briefcase
+diffusers
 huggingface_hub
+toga
+torch
+transformers
