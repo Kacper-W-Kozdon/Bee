@@ -28,7 +28,10 @@ def update_config(
     pipe = StableDiffusionPipeline
     # dir_dict_config = [entry for entry in dir(pipe) if "config" in entry]
     # print(dir_dict_config)
-    pipe_config = pipe.load_config(model_id, return_unused_kwargs=True)  # noqa: F841
+    try:
+        pipe_config = pipe.load_config(model_id, return_unused_kwargs=True)  # noqa: F841
+    except OSError:
+        pipe_config = {}  # noqa: F841
     # print(config)
     sig = inspect.signature(pipe.__call__)
     params = sig.parameters
