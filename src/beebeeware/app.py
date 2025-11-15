@@ -1,34 +1,45 @@
 """
 An app for Bee.
 """
+import copy
+import importlib
+import importlib.util
+import inspect
+import json
+import pathlib
+import sys
 import time
+import typing
+from dataclasses import dataclass, field
+from functools import partial, wraps
+from typing import Callable, Generator, OrderedDict, Union
 
-import_start = time.perf_counter()
+import toga
+import toga.paths
+import toga.validators
+from huggingface_hub import list_models
+from toga.colors import rgb
+from toga.constants import Baseline
+from toga.fonts import SANS_SERIF
+from toga.style.pack import CENTER, COLUMN, ROW, Pack
+from toga.widgets.table import OnSelectHandler
 
-import copy  # noqa: E402
-import inspect  # noqa: E402
-import json  # noqa: E402
-import pathlib  # noqa: E402
-import typing  # noqa: E402
-from dataclasses import dataclass, field  # noqa: E402
-from functools import partial, wraps  # noqa: E402
-from typing import Callable, Generator, OrderedDict, Union  # noqa: E402
+# from diffusers import StableDiffusionPipeline
 
-import toga  # noqa: E402
-import toga.paths  # noqa: E402
-import toga.validators  # noqa: E402
-from diffusers import StableDiffusionPipeline  # noqa: E402
-from huggingface_hub import list_models  # noqa: E402
-from toga.colors import rgb  # noqa: E402
-from toga.constants import Baseline  # noqa: E402
-from toga.fonts import SANS_SERIF  # noqa: E402
-from toga.style.pack import CENTER, COLUMN, ROW, Pack  # noqa: E402
-from toga.widgets.table import OnSelectHandler  # noqa: E402
 
-import_end = time.perf_counter()
+def lazy(fullname):
+    try:
+        return sys.modules[fullname]
+    except KeyError:
+        spec = importlib.util.find_spec(fullname)
+        module = importlib.util.module_from_spec(spec)
+        loader = importlib.util.LazyLoader(spec.loader)
+        # Make module with proper locking and get it inserted into sys.modules.
+        loader.exec_module(module)
+    return module
 
-duration = import_end - import_start
-print(f"Importing dependancies finished in {duration=}")
+
+diffusers = lazy("diffusers")
 
 
 def timing(fun) -> Callable:
@@ -50,6 +61,7 @@ def update_config(
     model_id: Union[str, None] = None,
     base_or_lora: str = "base",
 ) -> OrderedDict[str, Union[str, int, float, None, list, dict]]:
+    StableDiffusionPipeline = diffusers.StableDiffusionPipeline
     pipe = StableDiffusionPipeline
     # dir_dict_config = [entry for entry in dir(pipe) if "config" in entry]
     # print(dir_dict_config)
