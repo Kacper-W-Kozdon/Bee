@@ -524,9 +524,14 @@ class BeeBeeware(toga.App):
 
     def preview_summary(self, widget) -> None:
         summary_preview = toga.Box(id="summary_preview", style=Pack(direction=COLUMN))
-        for config_label, config_value in self.config.items():
+        for config_label, config_value_ in self.config.items():
             if config_label == "no_preview":
                 continue
+
+            if isinstance(config_value_, tuple):
+                config_value = config_value_[1]
+            else:
+                config_value = config_value_
 
             label = toga.Label(config_label)
             value = toga.TextInput(
@@ -634,7 +639,7 @@ class BeeBeeware(toga.App):
         return text_window
 
     async def load_config(self, widget) -> None:
-        self.text_input(widget, "Load")
+        self.text_input(widget, window_name="Load")
 
     async def save_config(self, widget) -> None:
         self.text_input(widget, window_name="Save")
@@ -663,6 +668,11 @@ class BeeBeeware(toga.App):
                 print(f"Creating {config_path=}")
                 pathlib.Path(f"{config_path}\\").mkdir()
                 model_config = self.config
+
+                for option_name, option_value in model_config.items():
+                    if isinstance(option_value, tuple):
+                        model_config[option_name] = option_value[1]
+
                 json_configs = json.dumps(model_config)
 
                 with open(
