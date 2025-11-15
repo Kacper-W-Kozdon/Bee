@@ -1,27 +1,49 @@
 """
 An app for Bee.
 """
+import time
 
-import copy
-import inspect
-import json
-import pathlib
-import typing
-from dataclasses import dataclass, field
-from functools import partial, wraps
-from typing import Callable, Generator, OrderedDict, Union
+import_start = time.perf_counter()
 
-import toga
-import toga.paths
-from diffusers import StableDiffusionPipeline
-from huggingface_hub import list_models
-from toga.colors import rgb
-from toga.constants import Baseline
-from toga.fonts import SANS_SERIF
-from toga.style.pack import CENTER, COLUMN, ROW, Pack
-from toga.widgets.table import OnSelectHandler
+import copy  # noqa: E402
+import inspect  # noqa: E402
+import json  # noqa: E402
+import pathlib  # noqa: E402
+import typing  # noqa: E402
+from dataclasses import dataclass, field  # noqa: E402
+from functools import partial, wraps  # noqa: E402
+from typing import Callable, Generator, OrderedDict, Union  # noqa: E402
+
+import toga  # noqa: E402
+import toga.paths  # noqa: E402
+from diffusers import StableDiffusionPipeline  # noqa: E402
+from huggingface_hub import list_models  # noqa: E402
+from toga.colors import rgb  # noqa: E402
+from toga.constants import Baseline  # noqa: E402
+from toga.fonts import SANS_SERIF  # noqa: E402
+from toga.style.pack import CENTER, COLUMN, ROW, Pack  # noqa: E402
+from toga.widgets.table import OnSelectHandler  # noqa: E402
+
+import_end = time.perf_counter()
+
+duration = import_end - import_start
+print(f"Importing dependancies finished in {duration=}")
 
 
+def timing(fun) -> Callable:
+    @wraps(fun)
+    def outer(*args, **kwargs):
+        start = time.perf_counter()
+        ret = fun(*args, **kwargs)
+        end = time.perf_counter()
+        duration = end - start
+        print(f"---The execution of {fun.__name__=} {duration=}.---")
+        return ret
+
+    return outer
+
+
+@timing
 def update_config(
     model_id: Union[str, None] = None,
 ) -> OrderedDict[str, Union[str, int, float, None, list, dict]]:
@@ -78,6 +100,7 @@ def update_config(
     return OrderedDict(params_dict)
 
 
+@timing
 def get_models(
     per_page: int,
     pipeline_tag: str,
@@ -125,6 +148,7 @@ def get_models(
             yield ret
 
 
+@timing
 def get_default_base_and_lora(
     pipeline_tag: Union[str, None] = None, tags: Union[list[str], None] = None
 ) -> tuple[str, str]:
@@ -137,6 +161,7 @@ def get_default_base_and_lora(
     return base, lora
 
 
+@timing
 def get_models_page(
     total_number: int = 100,
     page_num: int = 1,
@@ -161,8 +186,9 @@ def get_models_page(
     return models
 
 
+@timing
 def assign_container(fun):
-    print(f"{fun.__name__=}")
+    # print(f"{fun.__name__=}")
 
     @wraps(fun)
     def outer(instance, container=None, page_id=None):
@@ -177,6 +203,7 @@ def assign_container(fun):
     return outer
 
 
+@timing
 def get_next(widget: toga.Widget, page: int) -> Union[None, toga.Widget]:
     next_widget: Union[toga.Widget, None] = None
 
@@ -200,6 +227,7 @@ def get_next(widget: toga.Widget, page: int) -> Union[None, toga.Widget]:
     return next_widget
 
 
+@timing
 def get_previous(widget: toga.Widget, page: int) -> Union[None, toga.Widget]:
     previous_widget: Union[toga.Widget, None] = None
 
@@ -231,14 +259,13 @@ no_preview_list: Callable[..., list[str]] = lambda: list(  # noqa: E731
 @dataclass
 class Config:
     no_preview: list[str] = field(default_factory=no_preview_list)
-    config_path: Union[str, pathlib.Path] = ""
+    config_path: Union[str, pathlib.Path] = str(toga.paths.Paths().config)
     base_model: Union[str, None] = get_default_base_and_lora("text-to-image", ["lora"])[
         0
     ]
     lora_model: Union[str, None] = get_default_base_and_lora("text-to-image", ["lora"])[
         1
     ]
-    placeholder: str = ""
 
 
 main_config = Config()
@@ -453,10 +480,11 @@ class BeeBeeware(toga.App):
 
         for config_name, config_input in config.items():
             label = toga.Label(config_name)
+            config_value = toga.TextInput(value=config_input, readonly=True)
             config_box = toga.Box(style=Pack(direction=ROW))
 
             config_box.add(label)
-            config_box.add(config_input)
+            config_box.add(config_value)
 
             config_scroll.add(config_box)
 
