@@ -292,12 +292,8 @@ no_preview_list: Callable[..., list[str]] = lambda: list(  # noqa: E731
 class Config:
     no_preview: list[str] = field(default_factory=no_preview_list)
     config_path: Union[str, pathlib.Path] = ""
-    base_model: Union[str, None] = get_default_base_and_lora("text-to-image", ["lora"])[
-        0
-    ]
-    lora_model: Union[str, None] = get_default_base_and_lora("text-to-image", ["lora"])[
-        1
-    ]
+    base_model: Union[str, None] = ""
+    lora_model: Union[str, None] = ""
 
 
 main_config = Config()
@@ -323,6 +319,12 @@ class BeeBeeware(toga.App):
         """
 
         self.config.update({"config_path": str(toga.paths.Paths().config)})
+        self.config.update(
+            {"base_model": get_default_base_and_lora("text-to-image", ["lora"])[0]}
+        )
+        self.config.update(
+            {"lora_model": get_default_base_and_lora("text-to-image", ["lora"])[1]}
+        )
 
         self.main_window = toga.MainWindow(title=self.formal_name)
 
