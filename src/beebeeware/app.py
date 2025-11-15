@@ -16,6 +16,7 @@ from typing import Callable, Generator, OrderedDict, Union  # noqa: E402
 
 import toga  # noqa: E402
 import toga.paths  # noqa: E402
+import toga.validators  # noqa: E402
 from diffusers import StableDiffusionPipeline  # noqa: E402
 from huggingface_hub import list_models  # noqa: E402
 from toga.colors import rgb  # noqa: E402
@@ -479,11 +480,36 @@ class BeeBeeware(toga.App):
         )
 
         for config_name, config_input in config.items():
+            validators: list[
+                Union[toga.validators.CountValidator, toga.validators.BooleanValidator]
+            ] | None = []
             label = toga.Label(config_name)
-            config_value = toga.TextInput(value=config_input, readonly=True)
-            config_box = toga.Box(style=Pack(direction=ROW))
+            types_id = f"type_{label}"
+            values_id = f"value_{label}"
+            config_id = f"{label}_config"
+            input_types = config_input[0]
+            input_default = config_input[1]
+            add_next: bool = False
+
+            if any([int in input_types, float in input_types]):
+                validators.append(toga.validators.Number)
+
+            if any(
+                [
+                    list in map(typing.get_origin, input_types),
+                    dict in map(typing.get_origin, input_types),
+                ]
+            ):
+                add_next = True  # noqa: F841
+
+            config_types = toga.TextInput(id=types_id, value=input_types, readonly=True)
+            config_box = toga.Box(id=config_id, style=Pack(direction=ROW))
+            config_value = toga.TextInput(
+                id=values_id, placeholder=input_default, validators=validators
+            )
 
             config_box.add(label)
+            config_box.add(config_types)
             config_box.add(config_value)
 
             config_scroll.add(config_box)
