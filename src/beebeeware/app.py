@@ -46,11 +46,25 @@ def timing(fun) -> Callable:
 
 @timing
 def update_config(
+    instance: Union[toga.Widget, toga.Widget, None] = None,
     model_id: Union[str, None] = None,
+    base_or_lora: str = "base",
 ) -> OrderedDict[str, Union[str, int, float, None, list, dict]]:
     pipe = StableDiffusionPipeline
     # dir_dict_config = [entry for entry in dir(pipe) if "config" in entry]
     # print(dir_dict_config)
+
+    if base_or_lora not in ["base", "lora"]:
+        raise ValueError(f"Expected value from ['base', 'lora']. Got {base_or_lora=}")
+
+    if instance:
+        model_id = instance.config.get(f"{base_or_lora}_model")
+
+    if model_id in ["", None]:
+        raise ValueError(
+            f"The model_id should be a valid id parameter from a model from huggingface_hub.list_models(). Got {model_id=}"
+        )
+
     try:
         pipe_config = pipe.load_config(model_id, return_unused_kwargs=True)  # noqa: F841
     except OSError:
@@ -98,7 +112,12 @@ def update_config(
 
         params_dict[param_name] = (annotations_out, default)
 
-    return OrderedDict(params_dict)
+    ret = OrderedDict(params_dict)
+
+    if instance:
+        instance.config.update(ret)
+
+    return ret
 
 
 @timing
@@ -260,7 +279,7 @@ no_preview_list: Callable[..., list[str]] = lambda: list(  # noqa: E731
 @dataclass
 class Config:
     no_preview: list[str] = field(default_factory=no_preview_list)
-    config_path: Union[str, pathlib.Path] = str(toga.paths.Paths().config)
+    config_path: Union[str, pathlib.Path] = ""
     base_model: Union[str, None] = get_default_base_and_lora("text-to-image", ["lora"])[
         0
     ]
@@ -290,6 +309,8 @@ class BeeBeeware(toga.App):
         We then create a main window (with a name matching the app), and
         show the main window.
         """
+
+        self.config.update({"config_path": str(toga.paths.Paths().config)})
 
         self.main_window = toga.MainWindow(title=self.formal_name)
 
@@ -468,7 +489,7 @@ class BeeBeeware(toga.App):
 
         model_configs: OrderedDict[
             str, Union[str, int, float, list, dict, None]
-        ] = update_config(model_id=base_model)
+        ] = update_config(instance=self, model_id=base_model)
         config.update(model_configs)  # type: ignore
 
         config_scroll = toga.Box(id="config", style=Pack(direction=COLUMN))
@@ -524,6 +545,7 @@ class BeeBeeware(toga.App):
 
     def preview_summary(self, widget) -> None:
         summary_preview = toga.Box(id="summary_preview", style=Pack(direction=COLUMN))
+        update_config(self)
         for config_label, config_value_ in self.config.items():
             if config_label == "no_preview":
                 continue
