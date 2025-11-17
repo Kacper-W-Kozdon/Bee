@@ -1,6 +1,7 @@
 """
 An app for Bee.
 """
+import contextlib
 import copy
 import importlib
 import importlib.util
@@ -25,6 +26,31 @@ from toga.style.pack import CENTER, COLUMN, ROW, Pack
 from toga.widgets.table import OnSelectHandler
 
 # from diffusers import StableDiffusionPipeline
+
+# Source - https://stackoverflow.com/a
+# Posted by Jason Grout
+# Retrieved 2025-11-17, License - CC BY-SA 3.0
+
+
+@contextlib.contextmanager
+def capture():
+    from io import StringIO
+
+    oldout, olderr = sys.stdout, sys.stderr
+    try:
+        out = [StringIO(), StringIO()]
+        sys.stdout, sys.stderr = out
+        yield out
+    finally:
+        sys.stdout, sys.stderr = oldout, olderr
+        out[0] = out[0].getvalue()
+        out[1] = out[1].getvalue()
+
+
+# with capture() as out:
+#     pass
+
+# print(out)
 
 
 def lazy(fullname):
