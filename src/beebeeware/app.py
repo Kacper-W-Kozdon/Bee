@@ -625,10 +625,10 @@ class BeeBeeware(toga.App):
             config_box = toga.Box(style=Pack(direction=ROW), children=[label, value])
             summary_preview.add(config_box)
 
-            train_button = toga.Button(
-                "Train the model", on_press=self.aux_buttons["Train"]
-            )
-            summary_preview.add(train_button)
+        train_button = toga.Button(
+            "Train the model", on_press=self.aux_buttons["Train"]
+        )
+        summary_preview.add(train_button)
 
         self.previews_container.content = summary_preview
 
