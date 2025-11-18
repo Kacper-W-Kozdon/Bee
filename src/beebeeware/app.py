@@ -61,10 +61,7 @@ def lazy(fullname):
         loader = importlib.util.LazyLoader(spec.loader)
         # Make module with proper locking and get it inserted into sys.modules.
         loader.exec_module(module)
-    return module
-
-
-diffusers = lazy("diffusers")
+    return sys.modules[fullname]
 
 
 def timing(fun) -> Callable:
@@ -86,6 +83,7 @@ def update_config(
     model_id: Union[str, None] = None,
     base_or_lora: str = "base",
 ) -> OrderedDict[str, Union[str, int, float, None, list, dict]]:
+    diffusers = lazy("diffusers")
     StableDiffusionPipeline = diffusers.StableDiffusionPipeline
     pipe = StableDiffusionPipeline
     # dir_dict_config = [entry for entry in dir(pipe) if "config" in entry]
