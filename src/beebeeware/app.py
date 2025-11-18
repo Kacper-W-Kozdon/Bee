@@ -13,7 +13,8 @@ import time
 import typing
 from dataclasses import dataclass, field
 from functools import partial, wraps
-from typing import Callable, Generator, OrderedDict, Union
+from io import StringIO
+from typing import Any, AsyncGenerator, Callable, Generator, OrderedDict, Union
 
 import toga
 import toga.paths
@@ -34,8 +35,6 @@ from toga.widgets.table import OnSelectHandler
 
 @contextlib.contextmanager
 def capture():
-    from io import StringIO
-
     oldout, olderr = sys.stdout, sys.stderr
     try:
         out = [StringIO(), StringIO()]
@@ -314,6 +313,23 @@ no_preview_list: Callable[..., list[str]] = lambda: list(  # noqa: E731
 )
 
 
+@timing
+def default(instance: toga.Widget) -> None:
+    instance.config["base_model"] = ""
+    instance.config["lora_model"] = ""
+
+
+@timing
+async def train_model(
+    instance: toga.Widget,
+) -> Union[None, AsyncGenerator[StringIO, Any]]:
+    with capture() as out:
+        pass
+
+    yield out[0]
+    raise NotImplementedError
+
+
 @dataclass
 class Config:
     no_preview: list[str] = field(default_factory=no_preview_list)
@@ -368,6 +384,8 @@ class BeeBeeware(toga.App):
                 "Save to file": self.save_config,
                 "Next": self.next,
                 "Previous": self.previous,
+                "Default": default,
+                "Train": train_model,
             }
         )
 
@@ -539,6 +557,9 @@ class BeeBeeware(toga.App):
         load_button = toga.Button(
             "Load from file", on_press=self.aux_buttons["Load from file"]
         )
+        default_button = toga.Button(
+            "Use default", on_press=self.aux_buttons["Default"]
+        )
 
         for config_name, config_input in config.items():
             validators: list[
@@ -576,8 +597,10 @@ class BeeBeeware(toga.App):
             config_scroll.add(config_box)
 
         save_load_box = toga.Box(id="save_and_load", style=Pack(direction=ROW))
-        save_load_box.add(save_button)
+
+        save_load_box.add(default_button)
         save_load_box.add(load_button)
+        save_load_box.add(save_button)
 
         config_scroll.add(save_load_box)
 
@@ -601,6 +624,11 @@ class BeeBeeware(toga.App):
             )
             config_box = toga.Box(style=Pack(direction=ROW), children=[label, value])
             summary_preview.add(config_box)
+
+            train_button = toga.Button(
+                "Train the model", on_press=self.aux_buttons["Train"]
+            )
+            summary_preview.add(train_button)
 
         self.previews_container.content = summary_preview
 
