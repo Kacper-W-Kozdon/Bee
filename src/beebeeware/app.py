@@ -19,7 +19,7 @@ from typing import Any, AsyncGenerator, Callable, Generator, OrderedDict, Union
 import toga
 import toga.paths
 import toga.validators
-from huggingface_hub import list_models
+from huggingface_hub import hf_hub_download, list_models
 from toga.colors import rgb
 from toga.constants import Baseline
 from toga.fonts import SANS_SERIF
@@ -34,6 +34,8 @@ from toga.widgets.table import OnSelectHandler
 
 
 default_pipeline: str = "StableDiffusionPipeline"
+recommended_base: str = "sd-legacy/stable-diffusion-v1-5"
+
 recommended_config: dict[str, dict[str, Union[str, float, int, bool]]] = {
     "base": {
         "prior_loss_weight": 1.0,
@@ -103,6 +105,7 @@ def lazy(fullname):
 
 
 diffusers = lazy("diffusers")
+torch = lazy("torch")
 
 
 def timing(fun) -> Callable:
@@ -388,7 +391,35 @@ async def train_model(
     instance: toga.Widget,
 ) -> Union[None, AsyncGenerator[StringIO, Any]]:
     with capture() as out:
-        pass
+        if "diffusers" not in sys.modules:
+            diffusers = lazy("diffusers")
+
+        try:
+            diffusers.__name__ in sys.modules
+        except ValueError:
+            diffusers = sys.modules["diffusers"]
+
+        DiffusionPipeline = diffusers.DiffusionPipeline
+        DDIMScheduler = diffusers.DDIMScheduler
+
+        # Source: https://huggingface.co/ByteDance/Hyper-SD
+
+        base_model_id = "runwayml/stable-diffusion-v1-5"
+        repo_name = "ByteDance/Hyper-SD"
+        # Take 2-steps lora as an example
+        ckpt_name = "Hyper-SD15-2steps-lora.safetensors"
+        # Load model.
+        pipe = DiffusionPipeline.from_pretrained(
+            base_model_id, torch_dtype=torch.float16, variant="fp16"
+        ).to("cuda")
+        pipe.load_lora_weights(hf_hub_download(repo_name, ckpt_name))
+        pipe.fuse_lora()
+        # Ensure ddim scheduler timestep spacing set as trailing !!!
+        pipe.scheduler = DDIMScheduler.from_config(
+            pipe.scheduler.config, timestep_spacing="trailing"
+        )
+        prompt = "a photo of a cat"
+        image = pipe(prompt=prompt, num_inference_steps=2, guidance_scale=0).images[0]  # noqa: F841
 
     yield out[0]
     raise NotImplementedError
