@@ -26,11 +26,14 @@ from toga.fonts import SANS_SERIF
 from toga.style.pack import CENTER, COLUMN, ROW, Pack
 from toga.widgets.table import OnSelectHandler
 
-# from diffusers import StableDiffusionPipeline
+# from diffusers import AutoPipelineForText2Image
 
 # Source - https://stackoverflow.com/a
 # Posted by Jason Grout
 # Retrieved 2025-11-17, License - CC BY-SA 3.0
+
+
+default_pipeline: str = "StableDiffusionPipeline"
 
 
 @contextlib.contextmanager
@@ -94,8 +97,8 @@ def update_config(
         diffusers = sys.modules["diffusers"]
         print(f"{diffusers.__name__=}")
 
-    StableDiffusionPipeline = diffusers.StableDiffusionPipeline
-    pipe = StableDiffusionPipeline
+    AutoPipelineForText2Image = diffusers.AutoPipelineForText2Image
+    pipe = AutoPipelineForText2Image
 
     # dir_dict_config = [entry for entry in dir(pipe) if "config" in entry]
     # print(dir_dict_config)
@@ -175,6 +178,8 @@ def get_models(
     tags: Union[list[str], None] = None,
 ) -> Generator[Union[list[str], None], None, None]:
     filtr = copy.copy(tags) or []
+    if default_pipeline not in filtr:
+        filtr.append(default_pipeline)
     filtr.append(pipeline_tag)
     models = list_models(filter=filtr)
     models_list: list[str] = []
@@ -219,8 +224,18 @@ def get_default_base_and_lora(
     pipeline_tag: Union[str, None] = None, tags: Union[list[str], None] = None
 ) -> tuple[str, str]:
     lora_filtr = copy.copy(tags) or []
+    if "lora" not in lora_filtr:
+        lora_filtr.append("lora")
+
     lora_filtr.append(str(pipeline_tag))
+
+    if "StableDiffusionPipeline" not in lora_filtr:
+        lora_filtr.append(default_pipeline)
+
     base_filtr = [str(pipeline_tag)]
+
+    if "StableDiffusionPipeline" not in base_filtr:
+        base_filtr.append(default_pipeline)
 
     base = [model.id for model in list_models(filter=base_filtr, limit=1)][0]
     lora = [model.id for model in list_models(filter=lora_filtr, limit=1)][0]
@@ -237,6 +252,11 @@ def get_models_page(
 ) -> Union[list[str], None]:
     page_num = int(page_num)
     models: Union[list[str], None] = []
+
+    tags = tags or []
+
+    if default_pipeline not in tags:
+        tags.append(default_pipeline)
 
     if page_num <= 0:
         raise ValueError(f"Page number has to be greater than 0. Got {page_num=}")
@@ -345,6 +365,7 @@ class Config:
     config_path: Union[str, pathlib.Path] = ""
     base_model: Union[str, None] = ""
     lora_model: Union[str, None] = ""
+    pipeline: Union[str, None] = default_pipeline
 
 
 main_config = Config()
