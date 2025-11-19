@@ -34,6 +34,41 @@ from toga.widgets.table import OnSelectHandler
 
 
 default_pipeline: str = "StableDiffusionPipeline"
+recommended_config: dict[str, dict[str, Union[str, float, int, bool]]] = {
+    "base": {
+        "prior_loss_weight": 1.0,
+        "resolution": 512,
+        "no_half_vae": True,
+        "text_encoder_lr": 0.0001,
+    },
+    "small_dataset": {
+        "train_batch_size": 2,
+        "learning_rate": 1e-4,
+        "max_train_steps": 1500,
+        "lr_scheduler": "cosine",
+        "lr_warmup_steps": 150,
+        "network_dim": 32,
+        "network_alpha": 16,
+    },
+    "medium_dataset": {
+        "train_batch_size": 2,
+        "learning_rate": 2e-4,
+        "max_train_steps": 3000,
+        "lr_scheduler": "cosine",
+        "lr_warmup_steps": 300,
+        "network_dim": 32,
+        "network_alpha": 16,
+    },
+    "big_dataset": {
+        "train_batch_size": 2,
+        "learning_rate": 2e-4,
+        "max_train_steps": 4500,
+        "lr_scheduler": "cosine",
+        "lr_warmup_steps": 300,
+        "network_dim": 64,
+        "network_alpha": 32,
+    },
+}
 
 
 @contextlib.contextmanager
