@@ -393,7 +393,7 @@ def get_previous(widget: toga.Widget, page: int) -> Union[None, toga.Widget]:
 
 
 no_preview_list: Callable[..., list[str]] = lambda: list(  # noqa: E731
-    ["no_preview", "config_path", "base_model", "lora_model"]
+    ["no_preview", "config_path", "base_model", "lora_model", "pipeline"]
 )
 
 
@@ -484,29 +484,16 @@ class BeeBeeware(toga.App):
         self.main_window = toga.MainWindow(title=self.formal_name)
 
         loading_progress = toga.ProgressBar(
-            "loading_progress", max=len(startup_libs), value=0
+            "loading_progress",
+            max=len(startup_libs),
+            value=0,
         )
-        loading_progress_box = toga.Box(
-            style=Pack(direction=COLUMN), children=[loading_progress]
-        )
-        main_box = toga.Box(
-            style=Pack(direction=COLUMN), children=[loading_progress_box]
-        )
-        self.main_window.content = main_box
-        self.main_window.show()
 
         loading_progress.start()
-
-        loop = asyncio.get_event_loop()
-
-        try:
-            loop.run_until_complete(load_libs(startup_libs, loading_progress))
-        finally:
-            loop.close()
-
+        asyncio.ensure_future(
+            load_libs(startup_libs, loading_progress), loop=asyncio.get_running_loop()
+        )
         loading_progress.stop()
-
-        self.main_window.hide()
 
         self.main_buttons = OrderedDict(
             {
@@ -544,6 +531,7 @@ class BeeBeeware(toga.App):
         self.previews_container = toga.ScrollContainer(
             id="previews_container", horizontal=False, style=Pack(direction=COLUMN)
         )
+        previews.add(loading_progress)
         self.previews_container.content = previews
 
         menu_previews_split.content = [
