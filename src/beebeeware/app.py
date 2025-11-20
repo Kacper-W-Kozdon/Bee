@@ -36,8 +36,8 @@ from toga.widgets.table import OnSelectHandler
 
 startup_libs: list[str] = ["torch", "diffusers"]
 
-diffusers = ModuleType("diffusers")
-torch = ModuleType("torch")
+diffusers: ModuleType = ModuleType("diffusers")
+torch: ModuleType = ModuleType("torch")
 
 default_pipeline: str = "StableDiffusionPipeline"
 recommended_base: str = "sd-legacy/stable-diffusion-v1-5"
@@ -79,13 +79,28 @@ recommended_config: dict[str, dict[str, Union[str, float, int, bool]]] = {
 }
 
 
-async def loader(libraries: list[str], counter: int = 0):
-    for lib in libraries:
+class Loader:
+    def __init__(self, loadable: str):
+        self.loadable = loadable
+
+    def __await__(self):
+        lib = self.loadable
+        print(f"Loading {lib}")
         if lib not in sys.modules:
             globals().update({lib: importlib.import_module(lib)})
+
+        return (yield None)
+
+
+async def loader(libraries: list[str], counter: int = 0):
+    for lib in libraries:
+        print(f"{lib=}, {lib in sys.modules=}")
+
+        if lib not in sys.modules:
+            await Loader(lib)
         counter += 1
 
-        print(lib in sys.modules)
+        print(f"{lib in sys.modules=}")
         yield counter
 
 
