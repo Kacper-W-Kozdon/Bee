@@ -1,6 +1,7 @@
 """
 An app for Bee.
 """
+import asyncio
 import contextlib
 import copy
 import importlib
@@ -78,17 +79,23 @@ recommended_config: dict[str, dict[str, Union[str, float, int, bool]]] = {
 }
 
 
-async def loader(lib: str, counter: int = 0) -> AsyncGenerator[int, Any]:
-    if lib not in sys.modules:
-        globals().update({lib: importlib.import_module(lib)})
-    counter += 1
-
-    yield counter
-
-
-def load_libs(libraries: list[str], widget: toga.Widget):
+async def loader(libraries: list[str], counter: int = 0):
     for lib in libraries:
-        widget.value = yield loader(lib)
+        if lib not in sys.modules:
+            globals().update({lib: importlib.import_module(lib)})
+        counter += 1
+
+        print(lib in sys.modules)
+        yield counter
+
+
+async def load_libs(libraries: list[str], widget: toga.Widget):
+    async for item in loader(libraries):
+        widget.value = item
+
+        print(widget.value)
+
+        await asyncio.sleep(0.1)
 
 
 @contextlib.contextmanager
@@ -490,7 +497,12 @@ class BeeBeeware(toga.App):
 
         loading_progress.start()
 
-        load_libs(startup_libs, loading_progress)
+        loop = asyncio.get_event_loop()
+
+        try:
+            loop.run_until_complete(load_libs(startup_libs, loading_progress))
+        finally:
+            loop.close()
 
         loading_progress.stop()
 
