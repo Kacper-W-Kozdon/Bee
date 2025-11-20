@@ -14,6 +14,7 @@ import typing
 from dataclasses import dataclass, field
 from functools import partial, wraps
 from io import StringIO
+from types import ModuleType
 from typing import Any, AsyncGenerator, Callable, Generator, OrderedDict, Union
 
 import toga
@@ -32,6 +33,10 @@ from toga.widgets.table import OnSelectHandler
 # Posted by Jason Grout
 # Retrieved 2025-11-17, License - CC BY-SA 3.0
 
+startup_libs: list[str] = ["torch", "diffusers"]
+
+diffusers = ModuleType("diffusers")
+torch = ModuleType("torch")
 
 default_pipeline: str = "StableDiffusionPipeline"
 recommended_base: str = "sd-legacy/stable-diffusion-v1-5"
@@ -73,6 +78,19 @@ recommended_config: dict[str, dict[str, Union[str, float, int, bool]]] = {
 }
 
 
+async def loader(lib: str, counter: int = 0) -> AsyncGenerator[int, Any]:
+    if lib not in sys.modules:
+        globals().update({lib: importlib.import_module(lib)})
+    counter += 1
+
+    yield counter
+
+
+def load_libs(libraries: list[str], widget: toga.Widget):
+    for lib in libraries:
+        widget.value = yield loader(lib)
+
+
 @contextlib.contextmanager
 def capture():
     oldout, olderr = sys.stdout, sys.stderr
@@ -92,20 +110,20 @@ def capture():
 # print(out)
 
 
-def lazy(fullname):
-    try:
-        return sys.modules[fullname]
-    except KeyError:
-        spec = importlib.util.find_spec(fullname)
-        module = importlib.util.module_from_spec(spec)
-        loader = importlib.util.LazyLoader(spec.loader)
-        # Make module with proper locking and get it inserted into sys.modules.
-        loader.exec_module(module)
-        return module
+# def lazy(fullname):
+#     try:
+#         return sys.modules[fullname]
+#     except KeyError:
+#         spec = importlib.util.find_spec(fullname)
+#         module = importlib.util.module_from_spec(spec)
+#         loader = importlib.util.LazyLoader(spec.loader)
+#         # Make module with proper locking and get it inserted into sys.modules.
+#         loader.exec_module(module)
+#         return module
 
 
-diffusers = lazy("diffusers")
-torch = lazy("torch")
+# diffusers = lazy("diffusers")
+# torch = lazy("torch")
 
 
 def timing(fun) -> Callable:
@@ -127,14 +145,6 @@ def update_config(
     model_id: Union[str, None] = None,
     base_or_lora: str = "base",
 ) -> OrderedDict[str, Union[str, int, float, None, list, dict]]:
-    global diffusers
-
-    try:
-        diffusers.__name__ in sys.modules
-    except ValueError:
-        diffusers = sys.modules["diffusers"]
-        print(f"{diffusers.__name__=}")
-
     AutoPipelineForText2Image = diffusers.AutoPipelineForText2Image
     pipe = AutoPipelineForText2Image
 
@@ -392,7 +402,7 @@ async def train_model(
 ) -> Union[None, AsyncGenerator[StringIO, Any]]:
     with capture() as out:
         if "diffusers" not in sys.modules:
-            diffusers = lazy("diffusers")
+            diffusers = importlib.import_module("diffusers")
 
         try:
             diffusers.__name__ in sys.modules
@@ -465,6 +475,26 @@ class BeeBeeware(toga.App):
         )
 
         self.main_window = toga.MainWindow(title=self.formal_name)
+
+        loading_progress = toga.ProgressBar(
+            "loading_progress", max=len(startup_libs), value=0
+        )
+        loading_progress_box = toga.Box(
+            style=Pack(direction=COLUMN), children=[loading_progress]
+        )
+        main_box = toga.Box(
+            style=Pack(direction=COLUMN), children=[loading_progress_box]
+        )
+        self.main_window.content = main_box
+        self.main_window.show()
+
+        loading_progress.start()
+
+        load_libs(startup_libs, loading_progress)
+
+        loading_progress.stop()
+
+        self.main_window.hide()
 
         self.main_buttons = OrderedDict(
             {

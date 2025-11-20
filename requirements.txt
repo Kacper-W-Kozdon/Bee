@@ -1,6 +1,7 @@
 briefcase
 diffusers
 huggingface_hub
+lazy_loader
 toga
 torch
 transformers

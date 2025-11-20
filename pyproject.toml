@@ -25,6 +25,7 @@ requires = [
     "torch",
     "diffusers",
     "transformers",
+    "lazy_loader",
 ]
 test_requires = [
     "pytest",
