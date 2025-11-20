@@ -660,6 +660,13 @@ class BeeBeeware(toga.App):
         self.previews_container.content = models
 
     def preview_config(self, widget):
+        if not all([lib in sys.modules for lib in startup_libs]):
+            toga.InfoDialog(
+                "Please, wait.", "Not all the libraries have been loaded yet."
+            )
+            pass
+            return None
+
         config = OrderedDict(
             {
                 config_name: toga.NumberInput(min=0, max=10, step=0.1, value=1)
@@ -733,6 +740,13 @@ class BeeBeeware(toga.App):
         self.previews_container.content = config_scroll
 
     def preview_summary(self, widget) -> None:
+        if not all([lib in sys.modules for lib in startup_libs]):
+            toga.InfoDialog(
+                "Please, wait.", "Not all the libraries have been loaded yet."
+            )
+            pass
+            return None
+
         summary_preview = toga.Box(id="summary_preview", style=Pack(direction=COLUMN))
         update_config(self)
         for config_label, config_value_ in self.config.items():
