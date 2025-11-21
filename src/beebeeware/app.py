@@ -692,7 +692,7 @@ class BeeBeeware(toga.App):
                         path.mkdir()
                 return widget
 
-        images_path: Union[str, pathlib.Path] = pathlib.Path(
+        images_path: pathlib.Path = pathlib.Path(
             f"{toga.paths.Paths().config}\\training_data"
         )
 
