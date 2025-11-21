@@ -899,10 +899,17 @@ class BeeBeeware(toga.App):
         return prev_view
 
     def text_input(self, widget, window_name: str = "") -> toga.Window:
-        default: dict[str, str] = {
-            "Save": str(toga.paths.Paths().config),
-            "Load": str(toga.paths.Paths().config),
-        }
+        default: OrderedDict[str, str] = OrderedDict(
+            {
+                "Save": f"{toga.paths.Paths().config}\\config",
+                "Load": f"{toga.paths.Paths().config}\\config",
+            }
+        )
+
+        for _, path in default:
+            if not pathlib.Path(path).exists():
+                pathlib.Path(path).mkdir()
+
         text_window = toga.Window(title=window_name)
 
         select_path = toga.Button(
@@ -1080,8 +1087,23 @@ class BeeBeeware(toga.App):
         images_path: pathlib.Path = pathlib.Path(
             f"{toga.paths.Paths().config}\\training_data"
         )
+
+        save_load_path: pathlib.Path = pathlib.Path(
+            f"{toga.paths.Path().config}\\config"
+        )
+
+        if not images_path.exists():
+            images_path.mkdir()
+
+        captions_paths_dict = {
+            "Save_path_button": ("Select config save folder", save_load_path),
+            "Load_path_button": ("Select config load folder", save_load_path),
+            "source_path_button": ("Select training data folder", images_path),
+        }
+
         source_path = toga.SelectFolderDialog(
-            "Select training data folder", initial_directory=images_path
+            captions_paths_dict[widget.id][0],
+            initial_directory=captions_paths_dict[widget.id][1],
         )
 
         task_name = str(widget.id).replace("_button", "")
