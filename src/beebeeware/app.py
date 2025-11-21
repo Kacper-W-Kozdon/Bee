@@ -696,22 +696,23 @@ class BeeBeeware(toga.App):
             f"{toga.paths.Paths().config}\\training_data"
         )
 
-        source_path = toga.TextInput(  # noqa: F841
+        selected_path = toga.TextInput(  # noqa: F841
             id="source_path",
             style=Pack(direction=COLUMN),
             on_confirm=check_path(),
+            readonly=True,
         )
 
         if not images_path.exists():
             images_path.mkdir()
 
-        select_path = toga.Button("Select path", on_press=self.path_handler)
-
-        selected_path = toga.Label(id="training_data_path", text="")
+        select_path = toga.Button(
+            "Select path", id="source_path_button", on_press=self.path_handler
+        )
 
         selection_box_paths = toga.Box(
             style=Pack(direction=ROW),
-            children=[source_path, select_path, selected_path],
+            children=[selected_path, select_path],
         )
 
         self.previews_container.content = selection_box_paths
@@ -904,6 +905,13 @@ class BeeBeeware(toga.App):
         }
         text_window = toga.Window(title=window_name)
 
+        select_path = toga.Button(
+            f"{window_name} path",
+            id=f"{window_name}_path_button",
+            on_press=self.path_handler,
+        )
+        selected_path = toga.TextInput(id=f"{window_name}_path", readonly=True)
+
         entry_box = toga.Box(id=window_name, style=Pack(direction=ROW))
         text_input_box = toga.TextInput(placeholder=f"{window_name}")
         path: str = default[window_name]
@@ -921,7 +929,13 @@ class BeeBeeware(toga.App):
         entry_box.add(text_input_box)
         entry_box.add(confirm_button)
 
-        text_window.content = entry_box
+        path_box = toga.Box(
+            style=Pack(direction=ROW), children=[selected_path, select_path]
+        )
+
+        text_window.content = toga.Box(
+            style=Pack(direction=COLUMN), children=[entry_box, path_box]
+        )
 
         text_window.show()
 
@@ -943,7 +957,11 @@ class BeeBeeware(toga.App):
     ) -> Config:
         print(f"Closing {window.title=}")
 
-        path = text_input_box.value or path
+        config_name = f"{text_input_box.value}.json" or "beeconfig.json"
+
+        save_load_path = self.main_window.widgets[f"{window.title}_path"]
+
+        path = save_load_path or path
         config_path: Union[str, pathlib.Path] = ""
         if window.title == "Load":
             if (config.config_path == "") or (path is not None):
@@ -965,14 +983,14 @@ class BeeBeeware(toga.App):
                 json_configs = json.dumps(model_config)
 
                 with open(
-                    pathlib.Path(f"{config_path}\\beeconfig.json"), "+w"
+                    pathlib.Path(f"{config_path}\\{config_name}"), "+w"
                 ) as config_file:
                     config_file.write(json_configs)
 
             if config_path is not None:
                 config_dict: OrderedDict = OrderedDict({})
                 with open(
-                    pathlib.Path(f"{config_path}\\beeconfig.json"), "r"
+                    pathlib.Path(f"{config_path}\\{config_name}"), "r"
                 ) as config_file:
                     config_dict = OrderedDict(json.load(config_file))
 
@@ -994,7 +1012,7 @@ class BeeBeeware(toga.App):
                 json_configs = json.dumps(model_config)
 
                 with open(
-                    pathlib.Path(f"{config_path}\\beeconfig.json"), "+w"
+                    pathlib.Path(f"{config_path}\\{config_name}"), "+w"
                 ) as config_file:
                     config_file.write(json_configs)
 
@@ -1066,14 +1084,18 @@ class BeeBeeware(toga.App):
             "Select training data folder", initial_directory=images_path
         )
 
-        task = asyncio.create_task(self.main_window.dialog(source_path))
+        task_name = str(widget.id).replace("_button", "")
+
+        task = asyncio.create_task(self.main_window.dialog(source_path), name=task_name)
         task.add_done_callback(self.dialog_dismissed)
         print("Dialog has been created")
 
     def dialog_dismissed(self, task):
+        widget_name: str = task.get_name()
+
         if task.result():
             print(f"{task.result()=}")
-            self.main_window.widgets["training_data_path"].value = task.result()
+            self.main_window.widgets[widget_name].value = task.result()
         else:
             print(f"{task.result()=}")
 
