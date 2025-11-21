@@ -701,12 +701,21 @@ class BeeBeeware(toga.App):
             style=Pack(direction=COLUMN),
             on_confirm=check_path(),
         )
-        # toga.SelectFolderDialog()
 
         if not images_path.exists():
             images_path.mkdir()
 
-        raise NotImplementedError
+        source_path_ = toga.SelectFolderDialog(
+            "Select training data folder", initial_directory=images_path
+        )
+
+        selection_box_paths = toga.Box(
+            style=Pack(direction=ROW), children=[source_path, source_path_]
+        )
+
+        self.previews_container.content = selection_box_paths
+
+        # raise NotImplementedError
 
     def preview_config(self, widget) -> None:
         if not all([lib in sys.modules for lib in startup_libs]):
