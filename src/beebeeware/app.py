@@ -19,13 +19,16 @@ from types import ModuleType
 from typing import Any, AsyncGenerator, Callable, Generator, OrderedDict, Union
 
 import toga
+import toga.handlers
 import toga.paths
+import toga.sources
 import toga.validators
 from huggingface_hub import hf_hub_download, list_models
 from toga.colors import rgb
 from toga.constants import Baseline
 from toga.fonts import SANS_SERIF
 from toga.style.pack import CENTER, COLUMN, ROW, Pack
+from toga.widgets import textinput
 from toga.widgets.table import OnSelectHandler
 
 # from diffusers import AutoPipelineForText2Image
@@ -514,6 +517,7 @@ class BeeBeeware(toga.App):
             {
                 "Model": self.preview_model_menu,
                 "Config": self.preview_config,
+                "Training Images": self.preview_images,
                 "Summary": self.preview_summary,
             }
         )
@@ -674,7 +678,37 @@ class BeeBeeware(toga.App):
         ]
         self.previews_container.content = models
 
-    def preview_config(self, widget):
+    def preview_images(self, widget) -> None:
+        class check_path(textinput.OnConfirmHandler):
+            def __call__(self, widget: toga.TextInput, **kwargs) -> toga.TextInput:
+                path: pathlib.Path = pathlib.Path(widget.value)
+
+                if not path.exists():
+                    confirmation = toga.ConfirmDialog(
+                        "Create a folder",
+                        f"Do you wish to create the folder with the {path=}?",
+                    )
+                    if confirmation:
+                        path.mkdir()
+                return widget
+
+        images_path: Union[str, pathlib.Path] = pathlib.Path(
+            f"{toga.paths.Paths().config}\\training_data"
+        )
+
+        source_path = toga.TextInput(  # noqa: F841
+            id="source_path",
+            style=Pack(direction=COLUMN),
+            on_confirm=check_path(),
+        )
+        # toga.SelectFolderDialog()
+
+        if not images_path.exists():
+            images_path.mkdir()
+
+        raise NotImplementedError
+
+    def preview_config(self, widget) -> None:
         if not all([lib in sys.modules for lib in startup_libs]):
             toga.InfoDialog(
                 "Please, wait.", "Not all the libraries have been loaded yet."
