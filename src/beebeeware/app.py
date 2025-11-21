@@ -705,12 +705,13 @@ class BeeBeeware(toga.App):
         if not images_path.exists():
             images_path.mkdir()
 
-        source_path_ = toga.SelectFolderDialog(
-            "Select training data folder", initial_directory=images_path
-        )
+        select_path = toga.Button("Select path", on_press=self.path_handler)
+
+        selected_path = toga.Label(id="training_data_path", text="")
 
         selection_box_paths = toga.Box(
-            style=Pack(direction=ROW), children=[source_path, source_path_]
+            style=Pack(direction=ROW),
+            children=[source_path, select_path, selected_path],
         )
 
         self.previews_container.content = selection_box_paths
@@ -1056,6 +1057,25 @@ class BeeBeeware(toga.App):
         await self.main_window.dialog(
             toga.InfoDialog("Placeholder title", "Placeholder message.")
         )
+
+    def path_handler(self, widget, **kwargs):
+        images_path: pathlib.Path = pathlib.Path(
+            f"{toga.paths.Paths().config}\\training_data"
+        )
+        source_path = toga.SelectFolderDialog(
+            "Select training data folder", initial_directory=images_path
+        )
+
+        task = asyncio.create_task(self.main_window.dialog(source_path))
+        task.add_done_callback(self.dialog_dismissed)
+        print("Dialog has been created")
+
+    def dialog_dismissed(self, task):
+        if task.result():
+            print(f"{task.result()=}")
+            self.main_window.widgets["training_data_path"].value = task.result()
+        else:
+            print(f"{task.result()=}")
 
 
 def main():
