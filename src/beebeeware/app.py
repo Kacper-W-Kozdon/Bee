@@ -958,7 +958,7 @@ class BeeBeeware(toga.App):
         )
 
         text_window.content = toga.Box(
-            style=Pack(direction=COLUMN), children=[entry_box, path_box]
+            style=Pack(direction=COLUMN), children=[path_box, entry_box]
         )
         self.text_window = text_window
         text_window.show()
