@@ -1089,7 +1089,7 @@ class BeeBeeware(toga.App):
         )
 
         save_load_path: pathlib.Path = pathlib.Path(
-            f"{toga.paths.Path().config}\\config"
+            f"{toga.paths.Paths().config}\\config"
         )
 
         if not images_path.exists():
