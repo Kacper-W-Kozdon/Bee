@@ -906,7 +906,7 @@ class BeeBeeware(toga.App):
             }
         )
 
-        for _, path in default:
+        for _, path in default.items():
             if not pathlib.Path(path).exists():
                 pathlib.Path(path).mkdir()
 
