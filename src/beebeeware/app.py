@@ -411,7 +411,16 @@ def get_previous(widget: toga.Widget, page: int) -> Union[None, toga.Widget]:
 
 
 no_preview_list: Callable[..., list[str]] = lambda: list(  # noqa: E731
-    ["no_preview", "config_path", "base_model", "lora_model", "pipeline"]
+    [
+        "no_preview",
+        "config_path",
+        "base_model",
+        "lora_model",
+        "pipeline",
+        "Save_path",
+        "Load_path",
+        "source_path",
+    ]
 )
 
 
@@ -464,6 +473,9 @@ async def train_model(
 class Config:
     no_preview: list[str] = field(default_factory=no_preview_list)
     config_path: Union[str, pathlib.Path] = ""
+    Save_path: Union[str, pathlib.Path] = ""
+    Load_path: Union[str, pathlib.Path] = ""
+    source_path: Union[str, pathlib.Path] = ""
     base_model: Union[str, None] = ""
     lora_model: Union[str, None] = ""
     pipeline: Union[str, None] = default_pipeline
@@ -701,6 +713,7 @@ class BeeBeeware(toga.App):
             style=Pack(direction=COLUMN),
             on_confirm=check_path(),
             readonly=True,
+            value=self.config["source_path"],
         )
 
         if not images_path.exists():
@@ -917,7 +930,11 @@ class BeeBeeware(toga.App):
             id=f"{window_name}_path_button",
             on_press=self.path_handler,
         )
-        selected_path = toga.TextInput(id=f"{window_name}_path", readonly=True)
+        selected_path = toga.TextInput(
+            id=f"{window_name}_path",
+            readonly=True,
+            value=self.config[f"{window_name}_path"],
+        )
 
         entry_box = toga.Box(id=window_name, style=Pack(direction=ROW))
         text_input_box = toga.TextInput(placeholder=f"{window_name}")
@@ -943,7 +960,7 @@ class BeeBeeware(toga.App):
         text_window.content = toga.Box(
             style=Pack(direction=COLUMN), children=[entry_box, path_box]
         )
-
+        self.text_window = text_window
         text_window.show()
 
         return text_window
@@ -966,7 +983,7 @@ class BeeBeeware(toga.App):
 
         config_name = f"{text_input_box.value}.json" or "beeconfig.json"
 
-        save_load_path = self.main_window.widgets[f"{window.title}_path"]
+        save_load_path = self.text_window.widgets[f"{window.title}_path"]
 
         path = save_load_path or path
         config_path: Union[str, pathlib.Path] = ""
@@ -1117,7 +1134,21 @@ class BeeBeeware(toga.App):
 
         if task.result():
             print(f"{task.result()=}")
-            self.main_window.widgets[widget_name].value = task.result()
+
+            match widget_name:
+                case "Save_path" | "Load_path":
+                    self.text_window.widgets[widget_name].value = task.result()
+                    self.config[widget_name] = task.result()
+
+                case "source_path":
+                    self.main_window.widgets[widget_name].value = task.result()
+                    self.config[widget_name] = task.result()
+
+                case _:
+                    raise KeyError(
+                        f"Couldn't match the path with the widget, {widget_name=}"
+                    )
+
         else:
             print(f"{task.result()=}")
 
