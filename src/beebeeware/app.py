@@ -937,8 +937,8 @@ class BeeBeeware(toga.App):
         )
 
         entry_box = toga.Box(id=window_name, style=Pack(direction=ROW))
-        text_input_box = toga.TextInput(placeholder=f"{window_name}")
-        path: str = default[window_name]
+        text_input_box = toga.TextInput(placeholder=f"{window_name} file name")
+        path: str = self.config[f"{window_name}_path"] or default[window_name]
 
         confirm_button = toga.Button(
             "Confirm",
