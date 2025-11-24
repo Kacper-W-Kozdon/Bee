@@ -154,18 +154,18 @@ def capture():
 
 
 def list_files(
-    mypath: Union[str, pathlib.Path], format: str = "Path", extension: str = ".json"
+    mypath: Union[str, pathlib.Path], format_: str = "Path", extension: str = ".json"
 ) -> Union[list[str], list[pathlib.Path], list]:
     # Source - https://stackoverflow.com/a
     # Posted by pycruft, modified by community. See post 'Timeline' for change history
     # Retrieved 2025-11-24, License - CC BY-SA 4.0
 
-    valid_formats = ["Path", "str", "path", "string", "file"]
+    valid_formats_ = ["Path", "str", "path", "string", "file"]
     valid_extensions = [".jpg", ".json", ".png", ".jpeg"]
 
-    if format not in valid_formats:
+    if format_ not in valid_formats_:
         raise ValueError(
-            f"Incorrect value for the format parameter. Expected one of the {valid_formats=}. Got {format=}."
+            f"Incorrect value for the format_ parameter. Expected one of the {valid_formats_=}. Got {format_=}."
         )
 
     if extension not in valid_extensions:
@@ -178,7 +178,7 @@ def list_files(
     if not mypath:
         return onlyfiles
 
-    match format:
+    match format_:
         case "path" | "Path":
             onlyfiles = [
                 pathlib.Path(f"{str(mypath)}\\{f}")
@@ -744,6 +744,10 @@ class BeeBeeware(toga.App):
 
     def preview_images(self, widget) -> None:
         class check_path(textinput.OnConfirmHandler):
+            def __init__(self, format_: str = "Path", extension: str = ".json"):
+                self.format_ = format_
+                self.extension = extension
+
             def __call__(self, widget: toga.TextInput, **kwargs) -> toga.TextInput:
                 path: pathlib.Path = pathlib.Path(widget.value)
 
@@ -754,6 +758,13 @@ class BeeBeeware(toga.App):
                     )
                     if confirmation:
                         path.mkdir()
+                    else:
+                        return widget
+
+                    files_ = list_files(  # noqa: F841
+                        path, format_=self.format_, extension=self.extension
+                    )
+
                 return widget
 
         images_path: pathlib.Path = pathlib.Path(
