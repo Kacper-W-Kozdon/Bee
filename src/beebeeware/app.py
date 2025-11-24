@@ -15,6 +15,8 @@ import typing
 from dataclasses import dataclass, field
 from functools import partial, wraps
 from io import StringIO
+from os import listdir
+from os.path import isfile, join
 from types import ModuleType
 from typing import Any, AsyncGenerator, Callable, Generator, OrderedDict, Union
 
@@ -149,6 +151,56 @@ def capture():
 
 # diffusers = lazy("diffusers")
 # torch = lazy("torch")
+
+
+def list_files(
+    mypath: Union[str, pathlib.Path], format: str = "Path", extension: str = ".json"
+) -> Union[list[str], list[pathlib.Path], list]:
+    # Source - https://stackoverflow.com/a
+    # Posted by pycruft, modified by community. See post 'Timeline' for change history
+    # Retrieved 2025-11-24, License - CC BY-SA 4.0
+
+    valid_formats = ["Path", "str", "path", "string", "file"]
+    valid_extensions = [".jpg", ".json", ".png", ".jpeg"]
+
+    if format not in valid_formats:
+        raise ValueError(
+            f"Incorrect value for the format parameter. Expected one of the {valid_formats=}. Got {format=}."
+        )
+
+    if extension not in valid_extensions:
+        raise ValueError(
+            f"Incorrect value for the extension parameter. Expected one of the {valid_extensions=}. Got {extension=}."
+        )
+
+    onlyfiles: Union[list[str], list[pathlib.Path], list] = []
+
+    if not mypath:
+        return onlyfiles
+
+    match format:
+        case "path" | "Path":
+            onlyfiles = [
+                pathlib.Path(f"{str(mypath)}\\{f}")
+                for f in listdir(mypath)
+                if (isfile(join(mypath, f)) and extension in f)
+            ]
+
+        case "str" | "string":
+            onlyfiles = [
+                f"{str(mypath)}\\{f}"
+                for f in listdir(mypath)
+                if (isfile(join(mypath, f)) and extension in f)
+            ]
+
+        case "file":
+            onlyfiles = [
+                f
+                for f in listdir(mypath)
+                if (isfile(join(mypath, f)) and extension in f)
+            ]
+
+    return onlyfiles
 
 
 def timing(fun) -> Callable:
