@@ -767,7 +767,7 @@ class BeeBeeware(toga.App):
                     if confirmation:
                         path.mkdir()
                     else:
-                        return
+                        return widget
 
                     files_: list[Union[str, pathlib.Path]] = []
 
@@ -853,9 +853,16 @@ class BeeBeeware(toga.App):
             "Select path", id="source_path_button", on_press=self.path_handler
         )
 
+        files_table = toga.Table(
+            id="files_table",
+            style=Pack(direction=COLUMN),
+            headings=["Images"],
+            data=files_list,
+        )
+
         selection_box_paths = toga.Box(
             style=Pack(direction=ROW),
-            children=[selected_path, select_path],
+            children=[selected_path, select_path, files_table],
         )
 
         self.previews_container.content = selection_box_paths
