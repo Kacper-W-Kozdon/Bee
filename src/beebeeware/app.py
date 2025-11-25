@@ -8,7 +8,9 @@ import importlib
 import importlib.util
 import inspect
 import json
+import os
 import pathlib
+import shutil
 import sys
 import time
 import typing
@@ -161,7 +163,7 @@ def list_files(
     # Retrieved 2025-11-24, License - CC BY-SA 4.0
 
     valid_formats_ = ["Path", "str", "path", "string", "file"]
-    valid_extensions = [".jpg", ".json", ".png", ".jpeg"]
+    valid_extensions = [".jpg", ".json", ".png", ".jpeg", ""]
 
     if format_ not in valid_formats_:
         raise ValueError(
@@ -743,10 +745,13 @@ class BeeBeeware(toga.App):
         self.previews_container.content = models
 
     def preview_images(self, widget) -> None:
+        valid_extensions = [".jpg", ".json", ".png", ".jpeg"]
+
         class check_path_confirm(textinput.OnConfirmHandler):
             def __init__(
                 self,
                 files: list[Union[str, pathlib.Path, None]],
+                destination: Union[str, pathlib.Path, None] = None,
                 format_: str = "Path",
                 extensions: Union[list[str], None] = None,
             ):
@@ -755,9 +760,15 @@ class BeeBeeware(toga.App):
                     [".json"] if not isinstance(extensions, list) else extensions
                 )
                 self.files = files
+                self.destination = (
+                    pathlib.Path(destination)
+                    if destination is not None
+                    else pathlib.Path(f"{toga.paths.Paths().config}\\Bee_training_data")
+                )
 
             def __call__(self, widget: toga.TextInput, **kwargs) -> toga.TextInput:
                 path: pathlib.Path = pathlib.Path(widget.value)
+                destination_path: pathlib.Path = self.destination
 
                 if not path.exists():
                     confirmation = toga.ConfirmDialog(
@@ -769,19 +780,48 @@ class BeeBeeware(toga.App):
                     else:
                         return widget
 
-                    files_: list[Union[str, pathlib.Path]] = []
+                if not destination_path.exists():
+                    confirmation = toga.ConfirmDialog(
+                        "Create a folder",
+                        f"Do you wish to create the folder with the {destination_path=}?",
+                    )
+                    if confirmation:
+                        destination_path.mkdir()
+                    else:
+                        return widget
 
-                    for extension in self.extensions:
-                        files_.extend(
-                            list_files(  # noqa: F841
-                                path, format_=self.format_, extension=extension
-                            )
+                files_to_clear = list_files(destination_path, extension="")
+
+                for file in files_to_clear:
+                    if "Bee_training_data" not in str(file):
+                        raise FileNotFoundError(
+                            f"Expected 'Bee_training_data' folder name was not found in the path to the {file=}."
                         )
 
-                    while self.files:
-                        self.files.pop()
+                    os.remove(file)
 
-                    self.files.extend(files_)
+                files_: list[Union[str, pathlib.Path]] = []
+
+                for extension in self.extensions:
+                    files_.extend(
+                        list_files(  # noqa: F841
+                            path, format_=self.format_, extension=extension
+                        )
+                    )
+
+                files_.sort()
+
+                for file_index, file in enumerate(files_):
+                    extension = [ext for ext in valid_extensions if ext in str(file)][0]
+                    shutil.copyfile(
+                        file,
+                        pathlib.Path(f"{destination_path}\\{file_index}{extension}"),
+                    )
+
+                while self.files:
+                    self.files.pop()
+
+                self.files.extend(files_)
 
                 return widget
 
@@ -789,6 +829,7 @@ class BeeBeeware(toga.App):
             def __init__(
                 self,
                 files: list[Union[str, pathlib.Path, None]],
+                destination: Union[str, pathlib.Path, None] = None,
                 format_: str = "Path",
                 extensions: Union[list[str], None] = None,
             ):
@@ -797,9 +838,15 @@ class BeeBeeware(toga.App):
                     [".json"] if not isinstance(extensions, list) else extensions
                 )
                 self.files = files
+                self.destination = (
+                    pathlib.Path(destination)
+                    if destination is not None
+                    else pathlib.Path(f"{toga.paths.Paths().config}\\Bee_training_data")
+                )
 
             def __call__(self, widget: toga.TextInput, **kwargs) -> toga.TextInput:
                 path: pathlib.Path = pathlib.Path(widget.value)
+                destination_path: pathlib.Path = self.destination
 
                 if not path.exists():
                     confirmation = toga.ConfirmDialog(
@@ -811,25 +858,57 @@ class BeeBeeware(toga.App):
                     else:
                         return widget
 
-                    files_: list[Union[str, pathlib.Path]] = []
+                if not destination_path.exists():
+                    confirmation = toga.ConfirmDialog(
+                        "Create a folder",
+                        f"Do you wish to create the folder with the {destination_path=}?",
+                    )
+                    if confirmation:
+                        destination_path.mkdir()
+                    else:
+                        return widget
 
-                    for extension in self.extensions:
-                        files_.extend(
-                            list_files(  # noqa: F841
-                                path, format_=self.format_, extension=extension
-                            )
+                files_to_clear = list_files(destination_path, extension="")
+
+                for file in files_to_clear:
+                    if "Bee_training_data" not in str(file):
+                        raise FileNotFoundError(
+                            f"Expected 'Bee_training_data' folder name was not found in the path to the {file=}."
                         )
 
-                    while self.files:
-                        self.files.pop()
+                    os.remove(file)
 
-                    self.files.extend(files_)
+                files_: list[Union[str, pathlib.Path]] = []
+
+                for extension in self.extensions:
+                    files_.extend(
+                        list_files(  # noqa: F841
+                            path, format_=self.format_, extension=extension
+                        )
+                    )
+
+                files_.sort()
+
+                for file_index, file in enumerate(files_):
+                    extension = [ext for ext in valid_extensions if ext in str(file)][0]
+                    shutil.copyfile(
+                        file,
+                        pathlib.Path(f"{destination_path}\\{file_index}{extension}"),
+                    )
+
+                while self.files:
+                    self.files.pop()
+
+                self.files.extend(files_)
 
                 return widget
 
         images_path: pathlib.Path = pathlib.Path(
-            f"{toga.paths.Paths().config}\\training_data"
+            f"{toga.paths.Paths().config}\\Bee_training_data"
         )
+
+        if not images_path.exists():
+            images_path.mkdir()
 
         files_list: list[Union[str, pathlib.Path, None]] = []
 
@@ -837,17 +916,18 @@ class BeeBeeware(toga.App):
             id="source_path",
             style=Pack(direction=COLUMN),
             on_confirm=check_path_confirm(
-                files_list, extensions=[".png", ".jpg", ".jpeg"]
+                files_list,
+                destination=images_path,
+                extensions=[".png", ".jpg", ".jpeg"],
             ),
             on_change=check_path_change(
-                files_list, extensions=[".png", ".jpg", ".jpeg"]
+                files_list,
+                destination=images_path,
+                extensions=[".png", ".jpg", ".jpeg"],
             ),
             # readonly=True,
             value=self.config["source_path"],
         )
-
-        if not images_path.exists():
-            images_path.mkdir()
 
         select_path = toga.Button(
             "Select path", id="source_path_button", on_press=self.path_handler
@@ -1239,7 +1319,7 @@ class BeeBeeware(toga.App):
 
     def path_handler(self, widget, **kwargs):
         images_path: pathlib.Path = pathlib.Path(
-            f"{toga.paths.Paths().config}\\training_data"
+            f"{toga.paths.Paths().config}\\Bee_training_data"
         )
 
         save_load_path: pathlib.Path = pathlib.Path(
