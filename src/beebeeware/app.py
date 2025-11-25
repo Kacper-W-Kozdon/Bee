@@ -781,8 +781,7 @@ class BeeBeeware(toga.App):
                     while self.files:
                         self.files.pop()
 
-                    for item in files_:
-                        self.files.append(item)
+                    self.files.extend(files_)
 
                 return widget
 
@@ -824,8 +823,7 @@ class BeeBeeware(toga.App):
                     while self.files:
                         self.files.pop()
 
-                    for item in files_:
-                        self.files.append(item)
+                    self.files.extend(files_)
 
                 return widget
 
