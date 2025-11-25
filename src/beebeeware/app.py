@@ -743,10 +743,61 @@ class BeeBeeware(toga.App):
         self.previews_container.content = models
 
     def preview_images(self, widget) -> None:
-        class check_path(textinput.OnConfirmHandler):
-            def __init__(self, format_: str = "Path", extension: str = ".json"):
+        class check_path_confirm(textinput.OnConfirmHandler):
+            def __init__(
+                self,
+                files: list[Union[str, pathlib.Path, None]],
+                format_: str = "Path",
+                extensions: Union[list[str], None] = None,
+            ):
                 self.format_ = format_
-                self.extension = extension
+                self.extensions = (
+                    [".json"] if not isinstance(extensions, list) else extensions
+                )
+                self.files = files
+
+            def __call__(self, widget: toga.TextInput, **kwargs) -> toga.TextInput:
+                path: pathlib.Path = pathlib.Path(widget.value)
+
+                if not path.exists():
+                    confirmation = toga.ConfirmDialog(
+                        "Create a folder",
+                        f"Do you wish to create the folder with the {path=}?",
+                    )
+                    if confirmation:
+                        path.mkdir()
+                    else:
+                        return
+
+                    files_: list[Union[str, pathlib.Path]] = []
+
+                    for extension in self.extensions:
+                        files_.extend(
+                            list_files(  # noqa: F841
+                                path, format_=self.format_, extension=extension
+                            )
+                        )
+
+                    while self.files:
+                        self.files.pop()
+
+                    for item in files_:
+                        self.files.append(item)
+
+                return widget
+
+        class check_path_change(textinput.OnChangeHandler):
+            def __init__(
+                self,
+                files: list[Union[str, pathlib.Path, None]],
+                format_: str = "Path",
+                extensions: Union[list[str], None] = None,
+            ):
+                self.format_ = format_
+                self.extensions = (
+                    [".json"] if not isinstance(extensions, list) else extensions
+                )
+                self.files = files
 
             def __call__(self, widget: toga.TextInput, **kwargs) -> toga.TextInput:
                 path: pathlib.Path = pathlib.Path(widget.value)
@@ -761,9 +812,20 @@ class BeeBeeware(toga.App):
                     else:
                         return widget
 
-                    files_ = list_files(  # noqa: F841
-                        path, format_=self.format_, extension=self.extension
-                    )
+                    files_: list[Union[str, pathlib.Path]] = []
+
+                    for extension in self.extensions:
+                        files_.extend(
+                            list_files(  # noqa: F841
+                                path, format_=self.format_, extension=extension
+                            )
+                        )
+
+                    while self.files:
+                        self.files.pop()
+
+                    for item in files_:
+                        self.files.append(item)
 
                 return widget
 
@@ -771,11 +833,18 @@ class BeeBeeware(toga.App):
             f"{toga.paths.Paths().config}\\training_data"
         )
 
+        files_list: list[Union[str, pathlib.Path, None]] = []
+
         selected_path = toga.TextInput(  # noqa: F841
             id="source_path",
             style=Pack(direction=COLUMN),
-            on_confirm=check_path(),
-            readonly=True,
+            on_confirm=check_path_confirm(
+                files_list, extensions=[".png", ".jpg", ".jpeg"]
+            ),
+            on_change=check_path_change(
+                files_list, extensions=[".png", ".jpg", ".jpeg"]
+            ),
+            # readonly=True,
             value=self.config["source_path"],
         )
 
