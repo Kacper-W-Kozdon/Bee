@@ -942,10 +942,14 @@ class BeeBeeware(toga.App):
 
         selection_box_paths = toga.Box(
             style=Pack(direction=ROW),
-            children=[selected_path, select_path, files_table],
+            children=[selected_path, select_path],
         )
 
-        self.previews_container.content = selection_box_paths
+        selection_box = toga.Box(
+            style=Pack(direction=COLUMN), children=[selection_box_paths, files_table]
+        )
+
+        self.previews_container.content = selection_box
 
         # raise NotImplementedError
 
