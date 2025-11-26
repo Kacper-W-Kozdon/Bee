@@ -750,6 +750,7 @@ class BeeBeeware(toga.App):
         class check_path_confirm(textinput.OnConfirmHandler):
             def __init__(
                 self,
+                instance: BeeBeeware,
                 files: list[Union[str, pathlib.Path, None]],
                 destination: Union[str, pathlib.Path, None] = None,
                 format_: str = "Path",
@@ -765,6 +766,7 @@ class BeeBeeware(toga.App):
                     if destination is not None
                     else pathlib.Path(f"{toga.paths.Paths().config}\\Bee_training_data")
                 )
+                self.instance = instance
 
             def __call__(self, widget: toga.TextInput, **kwargs) -> toga.TextInput:
                 path: pathlib.Path = pathlib.Path(widget.value)
@@ -822,12 +824,26 @@ class BeeBeeware(toga.App):
                     self.files.pop()
 
                 self.files.extend(files_)
+
+                container_id: str = "files_table"
+                old_view: toga.Table = self.instance.main_window.widgets[container_id]
+                next_view: toga.Table = toga.Table(
+                    id=container_id,
+                    data=files_,
+                    headings=old_view.headings,
+                    style=Pack(direction=COLUMN),
+                )
+
+                self.instance.main_window.widgets[container_id].parent.replace(
+                    old_view, next_view
+                )
 
                 return widget
 
         class check_path_change(textinput.OnChangeHandler):
             def __init__(
                 self,
+                instance: BeeBeeware,
                 files: list[Union[str, pathlib.Path, None]],
                 destination: Union[str, pathlib.Path, None] = None,
                 format_: str = "Path",
@@ -843,6 +859,7 @@ class BeeBeeware(toga.App):
                     if destination is not None
                     else pathlib.Path(f"{toga.paths.Paths().config}\\Bee_training_data")
                 )
+                self.instance = instance
 
             def __call__(self, widget: toga.TextInput, **kwargs) -> toga.TextInput:
                 path: pathlib.Path = pathlib.Path(widget.value)
@@ -900,6 +917,19 @@ class BeeBeeware(toga.App):
                     self.files.pop()
 
                 self.files.extend(files_)
+
+                container_id: str = "files_table"
+                old_view: toga.Table = self.instance.main_window.widgets[container_id]
+                next_view: toga.Table = toga.Table(
+                    id=container_id,
+                    data=files_,
+                    headings=old_view.headings,
+                    style=Pack(direction=COLUMN),
+                )
+
+                self.instance.main_window.widgets[container_id].parent.replace(
+                    old_view, next_view
+                )
 
                 return widget
 
@@ -916,11 +946,13 @@ class BeeBeeware(toga.App):
             id="source_path",
             style=Pack(direction=COLUMN),
             on_confirm=check_path_confirm(
+                self,
                 files_list,
                 destination=images_path,
                 extensions=[".png", ".jpg", ".jpeg"],
             ),
             on_change=check_path_change(
+                self,
                 files_list,
                 destination=images_path,
                 extensions=[".png", ".jpg", ".jpeg"],
