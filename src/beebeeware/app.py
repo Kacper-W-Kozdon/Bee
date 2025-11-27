@@ -866,7 +866,7 @@ class BeeBeeware(toga.App):
                 self,
                 instance: BeeBeeware,
                 files: list[Union[str, pathlib.Path, None]],
-                images: list[Union[None, toga.Image, toga.ImagePreview]],
+                images: list[Union[None, toga.Image, toga.ImageView]],
                 destination: Union[str, pathlib.Path, None] = None,
                 format_: str = "Path",
                 extensions: Union[list[str], None] = None,
