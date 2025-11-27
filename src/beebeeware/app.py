@@ -31,8 +31,10 @@ from huggingface_hub import hf_hub_download, list_models
 from toga.colors import rgb
 from toga.constants import Baseline
 from toga.fonts import SANS_SERIF
+from toga.sources.list_source import Row
 from toga.style.pack import CENTER, COLUMN, ROW, Pack
 from toga.widgets import textinput
+from toga.widgets.button import OnPressHandler
 from toga.widgets.table import OnSelectHandler
 
 # from diffusers import AutoPipelineForText2Image
@@ -121,13 +123,36 @@ async def load_libs(libraries: list[str], widget: toga.Widget):
 
 
 class select_previews(OnSelectHandler):
-    def __init__(self, instance=None):
+    def __init__(self, instance=None, image_ids: list[int] | None = None):
         self.instance = instance
+        self.image_ids = image_ids if isinstance(image_ids, list) else []
 
-        raise NotImplementedError
+    def __call__(self, widget, **kwargs):
+        headings: list[str] = []
+        heading: str
+        widget: toga.Table
 
-    def __call__(self, widget, row, **kwargs):
-        raise NotImplementedError
+        self.image_ids.clear()
+
+        if not widget.headings:
+            raise ValueError(f"Table widget contained no headings. {widget.headings=}")
+
+        for heading in widget.headings:
+            headings.append(heading.lower().replace(" ", "_"))
+
+        if widget.selection is None:
+            raise ValueError(
+                f"The list of image rows should contain only Row entries. Got {widget.selection}"
+            )
+
+        image_rows: list[Row] = (
+            copy.copy(widget.selection)
+            if isinstance(widget.selection, list)
+            else [copy.copy(widget.selection)]
+        )
+
+        self.image_ids.extend(list(map(widget.data.index, image_rows)))
+
         return widget
 
 
@@ -485,6 +510,7 @@ no_preview_list: Callable[..., list[str]] = lambda: list(  # noqa: E731
         "Save_path",
         "Load_path",
         "source_path",
+        "image_dimensions",
     ]
 )
 
@@ -534,6 +560,20 @@ async def train_model(
     raise NotImplementedError
 
 
+class confirm_images(OnPressHandler):
+    def __init__(self, instance=None):
+        if instance is None:
+            raise ValueError(f"Expected BeeBeeware instance. Got {type(instance)}.")
+        self.instance = instance
+        raise NotImplementedError
+
+    def __call__(self, widget, **kwargs):
+        table_id = widget.id.replace("_button", "")  # noqa: F841
+
+        raise NotImplementedError
+        return widget
+
+
 @dataclass
 class Config:
     no_preview: list[str] = field(default_factory=no_preview_list)
@@ -541,6 +581,7 @@ class Config:
     Save_path: Union[str, pathlib.Path] = ""
     Load_path: Union[str, pathlib.Path] = ""
     source_path: Union[str, pathlib.Path] = ""
+    image_dimensions: dict[str, int] = {"height": 720, "width": 1080}
     base_model: Union[str, None] = ""
     lora_model: Union[str, None] = ""
     pipeline: Union[str, None] = default_pipeline
@@ -607,6 +648,7 @@ class BeeBeeware(toga.App):
                 "Previous": self.previous,
                 "Default": default,
                 "Train": train_model,
+                "confirm_images": confirm_images,
             }
         )
 
@@ -854,8 +896,8 @@ class BeeBeeware(toga.App):
                     )
 
                 while self.files:
-                    self.files.pop()
-                    self.img_previews.pop()
+                    self.files.clear()
+                    self.img_previews.clear()
 
                 self.files.extend(files_)
                 self.img_previews.extend(images_list_)
@@ -971,8 +1013,8 @@ class BeeBeeware(toga.App):
                     )
 
                 while self.files:
-                    self.files.pop()
-                    self.img_previews.pop()
+                    self.files.clear()
+                    self.img_previews.clear()
 
                 self.files.extend(files_)
                 self.img_previews.extend(images_list_)
@@ -1000,7 +1042,7 @@ class BeeBeeware(toga.App):
             images_path.mkdir()
 
         files_list: list[Union[str, pathlib.Path, None]] = []
-        images_list: list[Union[None, toga.Image, toga.ImageView]] = []
+        images_list: list[Union[None, str, pathlib.Path]] = []
 
         selected_path = toga.TextInput(  # noqa: F841
             id="source_path",
@@ -1037,13 +1079,22 @@ class BeeBeeware(toga.App):
 
             images_list.append(view)
 
+        image_ids: list[int] = []
+
         files_table = toga.Table(
             id="files_table",
             style=Pack(direction=COLUMN),
             headings=["Source Images", "Training Previews"],
             data=zip(files_list, images_list),
-            on_activate=select_previews(),
+            on_select=select_previews(self, image_ids),
+            multiple_select=True,
         )
+
+        confirm_images = toga.Button(  # noqa: F841
+            id="confirm_images_button", on_press=self.aux_buttons["confirm_images"]
+        )
+
+        confirmed_images = toga.Box(id="confirm_images")  # noqa: F841
 
         selection_box_paths = toga.Box(
             style=Pack(direction=ROW),
