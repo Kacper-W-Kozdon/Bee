@@ -33,7 +33,7 @@ from toga.constants import Baseline
 from toga.fonts import SANS_SERIF
 from toga.style.pack import CENTER, COLUMN, ROW, Pack
 from toga.widgets import textinput
-from toga.widgets.table import OnActivateHandler, OnSelectHandler
+from toga.widgets.table import OnSelectHandler
 
 # from diffusers import AutoPipelineForText2Image
 
@@ -120,7 +120,7 @@ async def load_libs(libraries: list[str], widget: toga.Widget):
         await asyncio.sleep(0.1)
 
 
-class modify_preview(OnActivateHandler):
+class select_previews(OnSelectHandler):
     def __init__(self, instance=None):
         self.instance = instance
 
@@ -1042,7 +1042,7 @@ class BeeBeeware(toga.App):
             style=Pack(direction=COLUMN),
             headings=["Source Images", "Training Previews"],
             data=zip(files_list, images_list),
-            on_activate=modify_preview(),
+            on_activate=select_previews(),
         )
 
         selection_box_paths = toga.Box(
