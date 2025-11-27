@@ -752,6 +752,7 @@ class BeeBeeware(toga.App):
                 self,
                 instance: BeeBeeware,
                 files: list[Union[str, pathlib.Path, None]],
+                images: list[Union[None, toga.Image, toga.ImageView]],
                 destination: Union[str, pathlib.Path, None] = None,
                 format_: str = "Path",
                 extensions: Union[list[str], None] = None,
@@ -761,6 +762,7 @@ class BeeBeeware(toga.App):
                     [".json"] if not isinstance(extensions, list) else extensions
                 )
                 self.files = files
+                self.img_previews = images
                 self.destination = (
                     pathlib.Path(destination)
                     if destination is not None
@@ -820,16 +822,35 @@ class BeeBeeware(toga.App):
                         pathlib.Path(f"{destination_path}\\{file_index}{extension}"),
                     )
 
+                images_list_ = []
+
+                for path in files_:
+                    my_image = None
+                    view = None
+
+                    if pathlib.Path(path).exists():
+                        my_image = toga.Image(pathlib.Path(path))
+                        view = toga.ImageView(my_image)
+
+                    images_list_.append(view)
+
+                if len(self.files) != len(self.img_previews):
+                    raise IndexError(
+                        f"Mismatched lists of file paths and previews. {len(self.files)=}, {len(self.img_previews)=}."
+                    )
+
                 while self.files:
                     self.files.pop()
+                    self.img_previews.pop()
 
                 self.files.extend(files_)
+                self.img_previews.extend(images_list_)
 
                 container_id: str = "files_table"
                 old_view: toga.Table = self.instance.main_window.widgets[container_id]
                 next_view: toga.Table = toga.Table(
                     id=container_id,
-                    data=files_,
+                    data=[files_, images_list_],
                     headings=old_view.headings,
                     style=Pack(direction=COLUMN),
                 )
@@ -845,6 +866,7 @@ class BeeBeeware(toga.App):
                 self,
                 instance: BeeBeeware,
                 files: list[Union[str, pathlib.Path, None]],
+                images: list[Union[None, toga.Image, toga.ImagePreview]],
                 destination: Union[str, pathlib.Path, None] = None,
                 format_: str = "Path",
                 extensions: Union[list[str], None] = None,
@@ -854,6 +876,7 @@ class BeeBeeware(toga.App):
                     [".json"] if not isinstance(extensions, list) else extensions
                 )
                 self.files = files
+                self.img_previews = images
                 self.destination = (
                     pathlib.Path(destination)
                     if destination is not None
@@ -913,16 +936,35 @@ class BeeBeeware(toga.App):
                         pathlib.Path(f"{destination_path}\\{file_index}{extension}"),
                     )
 
+                images_list_ = []
+
+                for path in files_:
+                    my_image = None
+                    view = None
+
+                    if pathlib.Path(path).exists():
+                        my_image = toga.Image(pathlib.Path(path))
+                        view = toga.ImageView(my_image)
+
+                    images_list_.append(view)
+
+                if len(self.files) != len(self.img_previews):
+                    raise IndexError(
+                        f"Mismatched lists of file paths and previews. {len(self.files)=}, {len(self.img_previews)=}."
+                    )
+
                 while self.files:
                     self.files.pop()
+                    self.img_previews.pop()
 
                 self.files.extend(files_)
+                self.img_previews.extend(images_list_)
 
                 container_id: str = "files_table"
                 old_view: toga.Table = self.instance.main_window.widgets[container_id]
                 next_view: toga.Table = toga.Table(
                     id=container_id,
-                    data=files_,
+                    data=[files_, images_list_],
                     headings=old_view.headings,
                     style=Pack(direction=COLUMN),
                 )
@@ -941,6 +983,7 @@ class BeeBeeware(toga.App):
             images_path.mkdir()
 
         files_list: list[Union[str, pathlib.Path, None]] = []
+        images_list: list[Union[None, toga.Image, toga.ImageView]] = []
 
         selected_path = toga.TextInput(  # noqa: F841
             id="source_path",
@@ -948,12 +991,14 @@ class BeeBeeware(toga.App):
             on_confirm=check_path_confirm(
                 self,
                 files_list,
+                images_list,
                 destination=images_path,
                 extensions=[".png", ".jpg", ".jpeg"],
             ),
             on_change=check_path_change(
                 self,
                 files_list,
+                images_list,
                 destination=images_path,
                 extensions=[".png", ".jpg", ".jpeg"],
             ),
@@ -965,11 +1010,21 @@ class BeeBeeware(toga.App):
             "Select path", id="source_path_button", on_press=self.path_handler
         )
 
+        for path in files_list:
+            my_image = None
+            view = None
+
+            if pathlib.Path(path).exists():
+                my_image = toga.Image(pathlib.Path(path))
+                view = toga.ImageView(my_image)
+
+            images_list.append(view)
+
         files_table = toga.Table(
             id="files_table",
             style=Pack(direction=COLUMN),
-            headings=["Images"],
-            data=files_list,
+            headings=["Images", "Previews"],
+            data=[files_list, images_list],
         )
 
         selection_box_paths = toga.Box(
