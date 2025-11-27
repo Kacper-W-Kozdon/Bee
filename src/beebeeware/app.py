@@ -850,7 +850,7 @@ class BeeBeeware(toga.App):
                 old_view: toga.Table = self.instance.main_window.widgets[container_id]
                 next_view: toga.Table = toga.Table(
                     id=container_id,
-                    data=[files_, images_list_],
+                    data=zip(files_, images_list_),
                     headings=old_view.headings,
                     style=Pack(direction=COLUMN),
                 )
@@ -964,7 +964,7 @@ class BeeBeeware(toga.App):
                 old_view: toga.Table = self.instance.main_window.widgets[container_id]
                 next_view: toga.Table = toga.Table(
                     id=container_id,
-                    data=[files_, images_list_],
+                    data=zip(files_, images_list_),
                     headings=old_view.headings,
                     style=Pack(direction=COLUMN),
                 )
@@ -1024,7 +1024,7 @@ class BeeBeeware(toga.App):
             id="files_table",
             style=Pack(direction=COLUMN),
             headings=["Images", "Previews"],
-            data=[files_list, images_list],
+            data=zip(files_list, images_list),
         )
 
         selection_box_paths = toga.Box(
