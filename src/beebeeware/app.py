@@ -752,7 +752,7 @@ class BeeBeeware(toga.App):
                 self,
                 instance: BeeBeeware,
                 files: list[Union[str, pathlib.Path, None]],
-                images: list[Union[None, toga.Image, toga.ImageView]],
+                images: list[Union[str, pathlib.Path, None]],
                 destination: Union[str, pathlib.Path, None] = None,
                 format_: str = "Path",
                 extensions: Union[list[str], None] = None,
@@ -813,6 +813,8 @@ class BeeBeeware(toga.App):
                         )
                     )
 
+                images_list_ = []
+
                 files_.sort()
 
                 for file_index, file in enumerate(files_):
@@ -821,18 +823,19 @@ class BeeBeeware(toga.App):
                         file,
                         pathlib.Path(f"{destination_path}\\{file_index}{extension}"),
                     )
+                    images_list_.append(
+                        pathlib.Path(f"{destination_path}\\{file_index}{extension}")
+                    )
 
-                images_list_ = []
+                # for path in files_:
+                #     my_image = None
+                #     view = None
 
-                for path in files_:
-                    my_image = None
-                    view = None
+                #     if pathlib.Path(path).exists():
+                #         my_image = toga.Image(pathlib.Path(path))
+                #         view = toga.ImageView(my_image)
 
-                    if pathlib.Path(path).exists():
-                        my_image = toga.Image(pathlib.Path(path))
-                        view = toga.ImageView(my_image)
-
-                    images_list_.append(view)
+                #     images_list_.append(view)
 
                 if len(self.files) != len(self.img_previews):
                     raise IndexError(
@@ -866,7 +869,7 @@ class BeeBeeware(toga.App):
                 self,
                 instance: BeeBeeware,
                 files: list[Union[str, pathlib.Path, None]],
-                images: list[Union[None, toga.Image, toga.ImageView]],
+                images: list[Union[str, pathlib.Path, None]],
                 destination: Union[str, pathlib.Path, None] = None,
                 format_: str = "Path",
                 extensions: Union[list[str], None] = None,
@@ -927,6 +930,8 @@ class BeeBeeware(toga.App):
                         )
                     )
 
+                images_list_ = []
+
                 files_.sort()
 
                 for file_index, file in enumerate(files_):
@@ -935,18 +940,19 @@ class BeeBeeware(toga.App):
                         file,
                         pathlib.Path(f"{destination_path}\\{file_index}{extension}"),
                     )
+                    images_list_.append(
+                        pathlib.Path(f"{destination_path}\\{file_index}{extension}")
+                    )
 
-                images_list_ = []
+                # for path in files_:
+                #     my_image = None
+                #     view = None
 
-                for path in files_:
-                    my_image = None
-                    view = None
+                #     if pathlib.Path(path).exists():
+                #         my_image = toga.Image(pathlib.Path(path))
+                #         view = toga.ImageView(my_image)
 
-                    if pathlib.Path(path).exists():
-                        my_image = toga.Image(pathlib.Path(path))
-                        view = toga.ImageView(my_image)
-
-                    images_list_.append(view)
+                #     images_list_.append(view)
 
                 if len(self.files) != len(self.img_previews):
                     raise IndexError(
@@ -1023,7 +1029,7 @@ class BeeBeeware(toga.App):
         files_table = toga.Table(
             id="files_table",
             style=Pack(direction=COLUMN),
-            headings=["Images", "Previews"],
+            headings=["Source Images", "Training Previews"],
             data=zip(files_list, images_list),
         )
 
