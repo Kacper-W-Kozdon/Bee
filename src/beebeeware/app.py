@@ -606,7 +606,6 @@ class confirm_images(OnPressHandler):
 
         parent_.replace(old_view, new_view)
 
-        raise NotImplementedError
         return widget
 
 
