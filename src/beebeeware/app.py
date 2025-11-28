@@ -514,6 +514,8 @@ no_preview_list: Callable[..., list[str]] = lambda: list(  # noqa: E731
     ]
 )
 
+image_dimensions: Callable[..., dict[str, int]] = lambda: {"height": 720, "width": 1080}  # noqa: E731
+
 
 @timing
 def default(instance: toga.Widget) -> None:
@@ -616,7 +618,7 @@ class Config:
     Save_path: Union[str, pathlib.Path] = ""
     Load_path: Union[str, pathlib.Path] = ""
     source_path: Union[str, pathlib.Path] = ""
-    image_dimensions: dict[str, int] = {"height": 720, "width": 1080}
+    image_dimensions: dict[str, int] = field(default_factory=image_dimensions)
     base_model: Union[str, None] = ""
     lora_model: Union[str, None] = ""
     pipeline: Union[str, None] = default_pipeline
