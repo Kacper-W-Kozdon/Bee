@@ -561,14 +561,50 @@ async def train_model(
 
 
 class confirm_images(OnPressHandler):
-    def __init__(self, instance=None):
-        if instance is None:
-            raise ValueError(f"Expected BeeBeeware instance. Got {type(instance)}.")
-        self.instance = instance
+    def __init__(
+        self, window: toga.Window, images_list: list[str], image_ids: list[int]
+    ):
+        if window is None:
+            raise ValueError(f"Expected toga.Window instance. Got {type(window)}.")
+        self.window = window
+
+        if images_list is None:
+            raise ValueError(f"Expected list[str] instance. Got {type(images_list)}.")
+        self.images_list = images_list
+
+        if image_ids is None:
+            raise ValueError(f"Expected list[str] instance. Got {type(image_ids)}.")
+        self.image_ids = image_ids
+
         raise NotImplementedError
 
     def __call__(self, widget, **kwargs):
         table_id = widget.id.replace("_button", "")  # noqa: F841
+        old_view = self.window.widgets[table_id]
+        new_view = toga.Box(id=table_id, style=Pack(direction=COLUMN))
+        parent_: toga.Box | None = self.window.widgets[table_id].parent
+
+        views_paths = [self.images_list[id] for id in self.image_ids]
+
+        if parent_ is None:
+            raise ValueError(
+                f"Expected parent node of the {widget.id=} to be a toga.Box instance. Got {parent_}."
+            )
+
+        for image in views_paths:
+            img_path = pathlib.Path(image)
+            if not img_path.exists():
+                raise LookupError(f"The path invalid. Got {img_path=}")
+            if not img_path.is_file():
+                raise FileNotFoundError(
+                    f"The path does not lead to a file. Got {img_path=}"
+                )
+
+            img = toga.Image(img_path)
+            img_view = toga.ImageView(img, id=str(img_path))
+            new_view.add(img_view)
+
+        parent_.replace(old_view, new_view)
 
         raise NotImplementedError
         return widget
@@ -1090,11 +1126,13 @@ class BeeBeeware(toga.App):
             multiple_select=True,
         )
 
-        confirm_images = toga.Button(  # noqa: F841
-            id="confirm_images_button", on_press=self.aux_buttons["confirm_images"]
-        )
-
         confirmed_images = toga.Box(id="confirm_images")  # noqa: F841
+        confirm_images_press = self.aux_buttons["confirm_images"](
+            window=self.main_window, images_list=images_list, image_ids=image_ids
+        )
+        confirm_images = toga.Button(  # noqa: F841
+            id="confirm_images_button", on_press=confirm_images_press
+        )
 
         selection_box_paths = toga.Box(
             style=Pack(direction=ROW),
@@ -1102,7 +1140,13 @@ class BeeBeeware(toga.App):
         )
 
         selection_box = toga.Box(
-            style=Pack(direction=COLUMN), children=[selection_box_paths, files_table]
+            style=Pack(direction=COLUMN),
+            children=[
+                selection_box_paths,
+                files_table,
+                confirm_images,
+                confirmed_images,
+            ],
         )
 
         self.previews_container.content = selection_box
