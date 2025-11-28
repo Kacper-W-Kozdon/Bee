@@ -153,6 +153,8 @@ class select_previews(OnSelectHandler):
 
         self.image_ids.extend(list(map(widget.data.index, image_rows)))
 
+        print(f"Selected images: {self.image_ids}")
+
         return widget
 
 
@@ -635,6 +637,8 @@ class BeeBeeware(toga.App):
             for config_name, config_value in main_config.__dict__.items()
         }
     )
+    files_list = []
+    images_list = []
 
     def startup(self):
         """Construct and show the Toga application.
@@ -1061,6 +1065,8 @@ class BeeBeeware(toga.App):
                     data=zip(files_, images_list_),
                     headings=old_view.headings,
                     style=Pack(direction=COLUMN),
+                    multiple_select=True,
+                    on_select=select_previews(self.instance, image_ids),
                 )
 
                 self.instance.main_window.widgets[container_id].parent.replace(
@@ -1076,8 +1082,8 @@ class BeeBeeware(toga.App):
         if not images_path.exists():
             images_path.mkdir()
 
-        files_list: list[Union[str, pathlib.Path, None]] = []
-        images_list: list[Union[None, str, pathlib.Path]] = []
+        files_list: list[Union[str, pathlib.Path, None]] = self.files_list
+        images_list: list[Union[None, str, pathlib.Path]] = self.images_list
 
         selected_path = toga.TextInput(  # noqa: F841
             id="source_path",
@@ -1130,7 +1136,9 @@ class BeeBeeware(toga.App):
             window=self.main_window, images_list=images_list, image_ids=image_ids
         )
         confirm_images = toga.Button(  # noqa: F841
-            id="confirm_images_button", on_press=confirm_images_press
+            "Confirm selection",
+            id="confirm_images_button",
+            on_press=confirm_images_press,
         )
 
         selection_box_paths = toga.Box(
