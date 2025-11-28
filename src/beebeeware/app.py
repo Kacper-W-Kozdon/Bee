@@ -578,8 +578,6 @@ class confirm_images(OnPressHandler):
             raise ValueError(f"Expected list[str] instance. Got {type(image_ids)}.")
         self.image_ids = image_ids
 
-        raise NotImplementedError
-
     def __call__(self, widget, **kwargs):
         table_id = widget.id.replace("_button", "")  # noqa: F841
         old_view = self.window.widgets[table_id]
