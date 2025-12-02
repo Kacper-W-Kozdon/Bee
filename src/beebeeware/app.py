@@ -35,6 +35,7 @@ from toga.sources.list_source import Row
 from toga.style.pack import CENTER, COLUMN, ROW, Pack
 from toga.widgets import textinput
 from toga.widgets.button import OnPressHandler
+from toga.widgets.canvas import OnTouchHandler
 from toga.widgets.table import OnSelectHandler
 
 # from diffusers import AutoPipelineForText2Image
@@ -120,6 +121,30 @@ async def load_libs(libraries: list[str], widget: toga.Widget):
         print(widget.value)
 
         await asyncio.sleep(0.1)
+
+
+class canvas_press(OnTouchHandler):
+    def __init__(self):
+        pass
+
+    def __call__(self, widget, x, y, **kwargs):
+        raise NotImplementedError
+
+
+class canvas_drag(OnTouchHandler):
+    def __init__(self):
+        pass
+
+    def __call__(self, widget, x, y, **kwargs):
+        raise NotImplementedError
+
+
+class canvas_release(OnTouchHandler):
+    def __init__(self):
+        pass
+
+    def __call__(self, widget, x, y, **kwargs):
+        raise NotImplementedError
 
 
 class select_previews(OnSelectHandler):
@@ -566,7 +591,11 @@ async def train_model(
 
 class crop_image(OnPressHandler):
     def __init__(
-        self, window: toga.Window, images_list: list[str], image_ids: list[int]
+        self,
+        window: toga.Window,
+        images_list: list[str],
+        image_ids: list[int],
+        image: toga.Image,
     ):
         if window is None:
             raise ValueError(f"Expected toga.Window instance. Got {type(window)}.")
@@ -580,7 +609,31 @@ class crop_image(OnPressHandler):
             raise ValueError(f"Expected list[str] instance. Got {type(image_ids)}.")
         self.image_ids = image_ids
 
+        if image is None:
+            raise ValueError(f"Expected toga.Image instance. Got {type(image)}.")
+        self.image = image
+
     def __call__(self, widget, **kwargs):
+        image_id = widget.id.replace("_button", "_image")
+
+        cropping_window = toga.Window(
+            id=f"{image_id}_crop", title=f"Cropping image {image_id}"
+        )
+
+        canvas = toga.Canvas(
+            id=f"{image_id}_canvas",
+            on_press=canvas_press(),
+            on_release=canvas_release(),
+            on_drag=canvas_drag(),
+        )
+
+        canvas.context.append(self.image)
+
+        cropping_box = toga.Box(style=Pack(direction=COLUMN), children=canvas)
+
+        cropping_window.content = cropping_box
+        cropping_window.show()
+
         raise NotImplementedError
 
 
