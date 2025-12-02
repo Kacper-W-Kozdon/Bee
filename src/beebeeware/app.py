@@ -564,6 +564,26 @@ async def train_model(
     raise NotImplementedError
 
 
+class crop_image(OnPressHandler):
+    def __init__(
+        self, window: toga.Window, images_list: list[str], image_ids: list[int]
+    ):
+        if window is None:
+            raise ValueError(f"Expected toga.Window instance. Got {type(window)}.")
+        self.window = window
+
+        if images_list is None:
+            raise ValueError(f"Expected list[str] instance. Got {type(images_list)}.")
+        self.images_list = images_list
+
+        if image_ids is None:
+            raise ValueError(f"Expected list[str] instance. Got {type(image_ids)}.")
+        self.image_ids = image_ids
+
+    def __call__(self, widget, **kwargs):
+        raise NotImplementedError
+
+
 class confirm_images(OnPressHandler):
     def __init__(
         self, window: toga.Window, images_list: list[str], image_ids: list[int]
@@ -603,11 +623,21 @@ class confirm_images(OnPressHandler):
                 )
 
             img = toga.Image(img_path)
-            img_view = toga.ImageView(
-                img,
+            img_view = toga.Box(
                 id=str(img_path),
-                height=image_dimensions().get("height"),
-                width=image_dimensions().get("width"),
+                children=[
+                    toga.ImageView(
+                        img,
+                        id=f"{str(img_path)}_image",
+                        height=image_dimensions().get("height"),
+                        width=image_dimensions().get("width"),
+                    ),
+                    toga.Button(
+                        "Crop",
+                        id=f"{str(img_path)}_button",
+                        on_press=self.window.app.aux_buttons.get("Crop_image"),
+                    ),
+                ],
             )
             new_view.add(img_view)
 
@@ -693,6 +723,7 @@ class BeeBeeware(toga.App):
                 "Default": default,
                 "Train": train_model,
                 "confirm_images": confirm_images,
+                "Crop_image": crop_image,
             }
         )
 
