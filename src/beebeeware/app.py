@@ -516,7 +516,7 @@ no_preview_list: Callable[..., list[str]] = lambda: list(  # noqa: E731
     ]
 )
 
-image_dimensions: Callable[..., dict[str, int]] = lambda: {"height": 720, "width": 1080}  # noqa: E731
+image_dimensions: Callable[..., dict[str, int]] = lambda: {"height": 240, "width": 320}  # noqa: E731
 
 
 @timing
@@ -603,7 +603,12 @@ class confirm_images(OnPressHandler):
                 )
 
             img = toga.Image(img_path)
-            img_view = toga.ImageView(img, id=str(img_path))
+            img_view = toga.ImageView(
+                img,
+                id=str(img_path),
+                height=image_dimensions().get("height"),
+                width=image_dimensions().get("width"),
+            )
             new_view.add(img_view)
 
         parent_.replace(old_view, new_view)
@@ -1116,7 +1121,11 @@ class BeeBeeware(toga.App):
 
             if pathlib.Path(path).exists():
                 my_image = toga.Image(pathlib.Path(path))
-                view = toga.ImageView(my_image)
+                view = toga.ImageView(
+                    my_image,
+                    height=image_dimensions().get("height"),
+                    width=image_dimensions().get("width"),
+                )
 
             images_list.append(view)
 
