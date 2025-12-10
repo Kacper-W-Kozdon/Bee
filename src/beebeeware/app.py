@@ -639,7 +639,11 @@ class crop_image(OnPressHandler):
 
 class confirm_images(OnPressHandler):
     def __init__(
-        self, window: toga.Window, images_list: list[str], image_previews: list[str]
+        self,
+        window: toga.Window,
+        images_list: list[str],
+        image_ids: list[int],
+        source_imgs_list: list[Union[str, pathlib.Path]],
     ):
         if window is None:
             raise ValueError(f"Expected toga.Window instance. Got {type(window)}.")
@@ -649,11 +653,15 @@ class confirm_images(OnPressHandler):
             raise ValueError(f"Expected list[str] instance. Got {type(images_list)}.")
         self.images_list = images_list
 
-        if image_previews is None:
+        if image_ids is None:
+            raise ValueError(f"Expected list[int] instance. Got {type(image_ids)}.")
+        self.image_ids = image_ids
+
+        if images_list is None:
             raise ValueError(
-                f"Expected list[str] instance. Got {type(image_previews)}."
+                f"Expected list[Union[str, pathlib.Path]] instance. Got {type(source_imgs_list)}."
             )
-        self.image_previews = image_previews
+        self.source_imgs_list = source_imgs_list
 
     def __call__(self, widget, **kwargs):
         table_id = widget.id.replace("_button", "")  # noqa: F841
@@ -662,6 +670,7 @@ class confirm_images(OnPressHandler):
         parent_: toga.Box | None = self.window.widgets[table_id].parent
 
         views_paths = [self.images_list[id] for id in self.image_ids]
+        print("Loading previews.")
 
         if parent_ is None:
             raise ValueError(
@@ -678,14 +687,23 @@ class confirm_images(OnPressHandler):
                 )
 
             img = toga.Image(img_path)
-            cropped_path = self.image_previews[image_id]
-            cropped_preview_img = toga.Image(cropped_path)
+
+            source_img_path: pathlib.Path | str = self.source_imgs_list[image_id]
+            if not source_img_path.exists():
+                raise LookupError(f"The path invalid. Got {source_img_path=}")
+            if not source_img_path.is_file():
+                raise FileNotFoundError(
+                    f"The path does not lead to a file. Got {source_img_path=}"
+                )
+            print(f"{img_path, source_img_path=}")
+            source_img: toga.Image = toga.Image(source_img_path)
+
             img_view = toga.Box(
                 id=str(img_path),
                 children=[
                     toga.ImageView(
-                        img,
-                        id=f"{str(img_path)}_image",
+                        source_img,
+                        id=f"{str(source_img_path)}_image",
                         height=image_dimensions().get("height"),
                         width=image_dimensions().get("width"),
                     ),
@@ -695,8 +713,8 @@ class confirm_images(OnPressHandler):
                         on_press=self.window.app.aux_buttons.get("Crop_image"),
                     ),
                     toga.ImageView(
-                        cropped_preview_img,
-                        id=f"{str(img_path)}_cropped_image",
+                        img,
+                        id=f"{str(img_path)}_image",
                         height=image_dimensions().get("height"),
                         width=image_dimensions().get("width"),
                     ),
@@ -964,6 +982,8 @@ class BeeBeeware(toga.App):
             def __call__(self, widget: toga.TextInput, **kwargs) -> toga.TextInput:
                 path: pathlib.Path = pathlib.Path(widget.value)
                 destination_path: pathlib.Path = self.destination
+
+                print(f"{path, destination_path=}")
 
                 if not path.exists():
                     confirmation = toga.ConfirmDialog(
@@ -1236,7 +1256,10 @@ class BeeBeeware(toga.App):
 
         confirmed_images = toga.Box(id="confirm_images")  # noqa: F841
         confirm_images_press = self.aux_buttons["confirm_images"](
-            window=self.main_window, images_list=images_list, image_ids=image_ids
+            window=self.main_window,
+            images_list=images_list,
+            image_ids=image_ids,
+            source_imgs_list=files_list,
         )
         confirm_images = toga.Button(  # noqa: F841
             "Confirm selection",
