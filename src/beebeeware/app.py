@@ -22,6 +22,7 @@ from os.path import isfile, join
 from types import ModuleType
 from typing import Any, AsyncGenerator, Callable, Generator, OrderedDict, Union
 
+import cv2 as cv
 import toga
 import toga.handlers
 import toga.paths
@@ -593,48 +594,73 @@ class crop_image(OnPressHandler):
     def __init__(
         self,
         window: toga.Window,
-        images_list: list[str],
-        image_ids: list[int],
-        image: toga.Image,
+        source_id: str,
     ):
         if window is None:
             raise ValueError(f"Expected toga.Window instance. Got {type(window)}.")
         self.window = window
 
-        if images_list is None:
-            raise ValueError(f"Expected list[str] instance. Got {type(images_list)}.")
-        self.images_list = images_list
+        try:
+            if window.widgets[source_id] is None:
+                raise ValueError(f"Image with widget id {source_id=} was not found.")
 
-        if image_ids is None:
-            raise ValueError(f"Expected list[str] instance. Got {type(image_ids)}.")
-        self.image_ids = image_ids
+        except KeyError as err:
+            raise ValueError(
+                f"Image with widget id {source_id=} was not found."
+            ) from err
 
-        if image is None:
-            raise ValueError(f"Expected toga.Image instance. Got {type(image)}.")
-        self.image = image
+        self.source_id = source_id
 
     def __call__(self, widget, **kwargs):
+        raise NotImplementedError
+
         image_id = widget.id.replace("_button", "_image")
 
+        if not isinstance(self.window.app, BeeBeeware):
+            raise TypeError(
+                f"Expected app instance to be of the BeeBeeware type. Got {type(self.window.app)=}."
+            )
+
+        dimensions = self.window.app.config.get("image_dimensions")
+
+        if not isinstance(dimensions, dict):
+            raise TypeError(
+                f"Expected type for config['image__dimensions'] is dict[str, int]. Got {type(dimensions)=}."
+            )
+
+        source_path = self.source_id
+        source_image = cv.imread(source_path)  # noqa: F841
+
+        if source_image is None:
+            raise FileExistsError(
+                f"Could not read the {source_image=}. Check if the file's path exists."
+            )
+
+        height = dimensions.get("height")  # noqa: F841
+        width = dimensions.get("width")  # noqa: F841
+
+        if not isinstance(height, int):
+            raise TypeError(f"Expected height type is int. Got {type(height)=}.")
+
+        if not isinstance(width, int):
+            raise TypeError(f"Expected height type is int. Got {type(width)=}.")
+
+        starting_point: tuple[int, ...] = tuple([0, 0])
+
+        frame = (
+            starting_point,
+            (starting_point[0] + width + 2, starting_point[1] + height + 2),
+        )
+        cv.rectangle(source_image, frame[0], frame[1])  # pylint: disable=no-member
+
         cropping_window = toga.Window(
-            id=f"{image_id}_crop", title=f"Cropping image {image_id}"
-        )
+            id=f"{image_id}_crop", title=f"Cropping image {self.source_id}"
+        )  # pylint: disable=not-callable
 
-        canvas = toga.Canvas(
-            id=f"{image_id}_canvas",
-            on_press=canvas_press(),
-            on_release=canvas_release(),
-            on_drag=canvas_drag(),
-        )
-
-        canvas.context.append(self.image)
-
-        cropping_box = toga.Box(style=Pack(direction=COLUMN), children=canvas)
+        cropping_box = toga.Box(style=Pack(direction=COLUMN))
 
         cropping_window.content = cropping_box
         cropping_window.show()
-
-        raise NotImplementedError
 
 
 class confirm_images(OnPressHandler):
@@ -698,19 +724,21 @@ class confirm_images(OnPressHandler):
             print(f"{img_path, source_img_path=}")
             source_img: toga.Image = toga.Image(source_img_path)
 
+            crop_press = self.window.app.aux_buttons.get("Crop_image")
+
             img_view = toga.Box(
                 id=str(img_path),
                 children=[
                     toga.ImageView(
                         source_img,
-                        id=f"{str(source_img_path)}_image",
+                        id=f"{str(source_img_path)}",
                         height=image_dimensions().get("height"),
                         width=image_dimensions().get("width"),
                     ),
                     toga.Button(
                         "Crop Image",
                         id=f"{str(img_path)}_button",
-                        on_press=self.window.app.aux_buttons.get("Crop_image"),
+                        on_press=crop_press,
                     ),
                     toga.ImageView(
                         img,
@@ -747,7 +775,9 @@ class BeeBeeware(toga.App):
     placeholder_text = "Placeholder"
     main_window_split = {"menu": 1, "previews": 2}
     preview_container_split = {"menu": 1, "options": 1}
-    config: OrderedDict[str, Union[str, None]] = OrderedDict(
+    config: OrderedDict[
+        str, Union[str, pathlib.Path, dict[str, int], list[str], None]
+    ] = OrderedDict(
         {
             config_name: config_value
             for config_name, config_value in main_config.__dict__.items()
