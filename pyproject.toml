@@ -26,6 +26,7 @@ requires = [
     "diffusers",
     "transformers",
     "lazy_loader",
+    "cv2",
 ]
 test_requires = [
     "pytest",

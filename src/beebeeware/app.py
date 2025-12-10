@@ -639,7 +639,7 @@ class crop_image(OnPressHandler):
 
 class confirm_images(OnPressHandler):
     def __init__(
-        self, window: toga.Window, images_list: list[str], image_ids: list[int]
+        self, window: toga.Window, images_list: list[str], image_previews: list[str]
     ):
         if window is None:
             raise ValueError(f"Expected toga.Window instance. Got {type(window)}.")
@@ -649,9 +649,11 @@ class confirm_images(OnPressHandler):
             raise ValueError(f"Expected list[str] instance. Got {type(images_list)}.")
         self.images_list = images_list
 
-        if image_ids is None:
-            raise ValueError(f"Expected list[str] instance. Got {type(image_ids)}.")
-        self.image_ids = image_ids
+        if image_previews is None:
+            raise ValueError(
+                f"Expected list[str] instance. Got {type(image_previews)}."
+            )
+        self.image_previews = image_previews
 
     def __call__(self, widget, **kwargs):
         table_id = widget.id.replace("_button", "")  # noqa: F841
@@ -666,7 +668,7 @@ class confirm_images(OnPressHandler):
                 f"Expected parent node of the {widget.id=} to be a toga.Box instance. Got {parent_}."
             )
 
-        for image in views_paths:
+        for image_id, image in enumerate(views_paths):
             img_path = pathlib.Path(image)
             if not img_path.exists():
                 raise LookupError(f"The path invalid. Got {img_path=}")
@@ -676,6 +678,8 @@ class confirm_images(OnPressHandler):
                 )
 
             img = toga.Image(img_path)
+            cropped_path = self.image_previews[image_id]
+            cropped_preview_img = toga.Image(cropped_path)
             img_view = toga.Box(
                 id=str(img_path),
                 children=[
@@ -686,9 +690,15 @@ class confirm_images(OnPressHandler):
                         width=image_dimensions().get("width"),
                     ),
                     toga.Button(
-                        "Crop",
+                        "Crop Image",
                         id=f"{str(img_path)}_button",
                         on_press=self.window.app.aux_buttons.get("Crop_image"),
+                    ),
+                    toga.ImageView(
+                        cropped_preview_img,
+                        id=f"{str(img_path)}_cropped_image",
+                        height=image_dimensions().get("height"),
+                        width=image_dimensions().get("width"),
                     ),
                 ],
             )
