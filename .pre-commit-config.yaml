@@ -6,14 +6,14 @@ default_install_hook_types: [pre-commit, commit-msg]
 
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.11
+    rev: v0.14.8
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
 
   - repo: https://github.com/timothycrosley/isort
-    rev: 5.12.0
+    rev: 7.0.0
     hooks:
       - id: isort
         additional_dependencies: [toml]

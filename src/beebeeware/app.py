@@ -1,6 +1,7 @@
 """
 An app for Bee.
 """
+
 import asyncio
 import contextlib
 import copy
@@ -20,7 +21,9 @@ from io import StringIO
 from os import listdir
 from os.path import isfile, join
 from types import ModuleType
-from typing import Any, AsyncGenerator, Callable, Generator, OrderedDict, Union
+from typing import Generator  # noqa
+from typing import OrderedDict  # noqa
+from typing import Any, AsyncGenerator, Callable, TypeAlias, Union  # noqa
 
 import cv2 as cv
 import toga
@@ -32,14 +35,15 @@ from huggingface_hub import hf_hub_download, list_models
 from toga.colors import rgb
 from toga.constants import Baseline
 from toga.fonts import SANS_SERIF
-from toga.images import ImageContentT
 from toga.sources.list_source import Row
 from toga.style.pack import CENTER, COLUMN, ROW, Pack
 from toga.widgets import textinput
-from toga.widgets.base import StyleT
 from toga.widgets.button import OnPressHandler
 from toga.widgets.canvas import OnResizeHandler, OnTouchHandler
 from toga.widgets.table import OnSelectHandler
+
+ImageContentT: TypeAlias = Any
+StyleT: TypeAlias = Any
 
 # from diffusers import AutoPipelineForText2Image
 
@@ -1417,9 +1421,9 @@ class BeeBeeware(toga.App):
         base_model = self.config.get("base_model")
         # lora_model = self.config.get("lora_model")
 
-        model_configs: OrderedDict[
-            str, Union[str, int, float, list, dict, None]
-        ] = update_config(instance=self, model_id=base_model)
+        model_configs: OrderedDict[str, Union[str, int, float, list, dict, None]] = (
+            update_config(instance=self, model_id=base_model)
+        )
         config.update(model_configs)  # type: ignore
 
         config_scroll = toga.Box(id="config", style=Pack(direction=COLUMN))
@@ -1434,9 +1438,14 @@ class BeeBeeware(toga.App):
         )
 
         for config_name, config_input in config.items():
-            validators: list[
-                Union[toga.validators.CountValidator, toga.validators.BooleanValidator]
-            ] | None = []
+            validators: (
+                list[
+                    Union[
+                        toga.validators.CountValidator, toga.validators.BooleanValidator
+                    ]
+                ]
+                | None
+            ) = []
             label = toga.Label(config_name)
             types_id = f"type_{label}"
             values_id = f"value_{label}"
