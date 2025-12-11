@@ -597,7 +597,8 @@ class cv_press(OnTouchHandler):
         super().__init__()
 
     def __call__(self, widget: toga.Canvas, x: int, y: int, **kwargs: Any) -> None:
-        raise NotImplementedError
+        print(f"{widget.id=}")
+        print(f"{x, y=}")
 
 
 class cv_drag(OnTouchHandler):
@@ -605,7 +606,8 @@ class cv_drag(OnTouchHandler):
         super().__init__()
 
     def __call__(self, widget: toga.Canvas, x: int, y: int, **kwargs: Any) -> None:
-        raise NotImplementedError
+        print(f"{widget.id=}")
+        print(f"{x, y=}")
 
 
 class cv_release(OnTouchHandler):
@@ -613,7 +615,8 @@ class cv_release(OnTouchHandler):
         super().__init__()
 
     def __call__(self, widget: toga.Canvas, x: int, y: int, **kwargs: Any) -> None:
-        raise NotImplementedError
+        print(f"{widget.id=}")
+        print(f"{x, y=}")
 
 
 class CVView(toga.ImageView, toga.Canvas):
@@ -735,10 +738,10 @@ class crop_image(OnPressHandler):
 class confirm_images(OnPressHandler):
     def __init__(
         self,
-        window: toga.Window,
-        images_list: list[str],
+        window: Union[toga.Window, str, None],
+        images_list: list[Union[str, pathlib.Path, None]],
         image_ids: list[int],
-        source_imgs_list: list[Union[str, pathlib.Path]],
+        source_imgs_list: list[Union[str, pathlib.Path, None]],
     ):
         if window is None:
             raise ValueError(f"Expected toga.Window instance. Got {type(window)}.")
@@ -809,11 +812,14 @@ class confirm_images(OnPressHandler):
                         id=f"{str(img_path)}_button",
                         on_press=crop_press,
                     ),
-                    toga.ImageView(
+                    CVView(
                         img,
                         id=f"{str(img_path)}_image",
                         height=image_dimensions().get("height"),
                         width=image_dimensions().get("width"),
+                        on_press=cv_press(),
+                        on_drag=cv_drag(),
+                        on_release=cv_release(),
                     ),
                 ],
             )
@@ -1354,16 +1360,23 @@ class BeeBeeware(toga.App):
         )
 
         confirmed_images = toga.Box(id="confirm_images")  # noqa: F841
-        confirm_images_press = self.aux_buttons["confirm_images"](
-            window=self.main_window,
-            images_list=images_list,
-            image_ids=image_ids,
-            source_imgs_list=files_list,
-        )
-        confirm_images = toga.Button(  # noqa: F841
+
+        confirm_images_press = self.aux_buttons["confirm_images"]
+
+        if not issubclass(confirm_images_press, confirm_images):
+            raise TypeError(
+                f"Expected handler confirm_images. Got {confirm_images_press=}."
+            )
+
+        confirm_images_ = toga.Button(  # noqa: F841
             "Confirm selection",
             id="confirm_images_button",
-            on_press=confirm_images_press,
+            on_press=confirm_images_press(
+                window=self.main_window,
+                images_list=images_list,
+                image_ids=image_ids,
+                source_imgs_list=files_list,
+            ),
         )
 
         selection_box_paths = toga.Box(
@@ -1376,7 +1389,7 @@ class BeeBeeware(toga.App):
             children=[
                 selection_box_paths,
                 files_table,
-                confirm_images,
+                confirm_images_,
                 confirmed_images,
             ],
         )
