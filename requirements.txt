@@ -3,6 +3,7 @@ cv2
 diffusers
 huggingface_hub
 lazy_loader
+Pillow
 toga
 torch
 transformers

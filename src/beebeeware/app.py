@@ -32,11 +32,13 @@ from huggingface_hub import hf_hub_download, list_models
 from toga.colors import rgb
 from toga.constants import Baseline
 from toga.fonts import SANS_SERIF
+from toga.images import ImageContentT
 from toga.sources.list_source import Row
 from toga.style.pack import CENTER, COLUMN, ROW, Pack
 from toga.widgets import textinput
+from toga.widgets.base import StyleT
 from toga.widgets.button import OnPressHandler
-from toga.widgets.canvas import OnTouchHandler
+from toga.widgets.canvas import OnResizeHandler, OnTouchHandler
 from toga.widgets.table import OnSelectHandler
 
 # from diffusers import AutoPipelineForText2Image
@@ -588,6 +590,73 @@ async def train_model(
 
     yield out[0]
     raise NotImplementedError
+
+
+class cv_press(OnTouchHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+
+    def __call__(self, widget: toga.Canvas, x: int, y: int, **kwargs: Any) -> None:
+        raise NotImplementedError
+
+
+class cv_drag(OnTouchHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+
+    def __call__(self, widget: toga.Canvas, x: int, y: int, **kwargs: Any) -> None:
+        raise NotImplementedError
+
+
+class cv_release(OnTouchHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+
+    def __call__(self, widget: toga.Canvas, x: int, y: int, **kwargs: Any) -> None:
+        raise NotImplementedError
+
+
+class CVView(toga.ImageView, toga.Canvas):
+    def __init__(
+        self,
+        image: ImageContentT | None = None,
+        id: str | None = None,
+        style: StyleT | None = None,
+        on_resize: OnResizeHandler | None = None,
+        on_press: OnTouchHandler | None = None,
+        on_activate: OnTouchHandler | None = None,
+        on_release: OnTouchHandler | None = None,
+        on_drag: OnTouchHandler | None = None,
+        on_alt_press: OnTouchHandler | None = None,
+        on_alt_release: OnTouchHandler | None = None,
+        on_alt_drag: OnTouchHandler | None = None,
+        **kwargs,
+    ):
+        """Create a new image view.
+
+        :param image: The image to display. Can be any valid
+            [image content][toga.images.ImageContentT] type; or [`None`][] to
+            display no image.
+        :param id: The ID for the widget.
+        :param style: A style object. If no style is provided, a default style will be
+            applied to the widget.
+        :param kwargs: Initial style properties.
+        """
+        # Prime the image attribute
+        self._image = None
+
+        super(toga.ImageView).__init__(image, id, style, **kwargs)
+
+        self.on_resize = on_resize
+        self.on_press = on_press
+        self.on_activate = on_activate
+        self.on_release = on_release
+        self.on_drag = on_drag
+        self.on_alt_press = on_alt_press
+        self.on_alt_release = on_alt_release
+        self.on_alt_drag = on_alt_drag
+
+        self.image = image
 
 
 class crop_image(OnPressHandler):
