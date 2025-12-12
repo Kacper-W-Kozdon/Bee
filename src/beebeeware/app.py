@@ -35,15 +35,24 @@ from huggingface_hub import hf_hub_download, list_models
 from toga.colors import rgb
 from toga.constants import Baseline
 from toga.fonts import SANS_SERIF
+from toga.handlers import wrapped_handler
 from toga.sources.list_source import Row
 from toga.style.pack import CENTER, COLUMN, ROW, Pack
 from toga.widgets import textinput
+from toga.widgets.base import StyleT
 from toga.widgets.button import OnPressHandler
 from toga.widgets.canvas import OnResizeHandler, OnTouchHandler
+from toga.widgets.canvas.context import Context
+from toga.widgets.canvas.drawingobject import DrawingObject
 from toga.widgets.table import OnSelectHandler
 
-ImageContentT: TypeAlias = Any
-StyleT: TypeAlias = Any
+PathLikeT: TypeAlias = str | os.PathLike
+BytesLikeT: TypeAlias = bytes | bytearray | memoryview
+ImageLikeT: TypeAlias = Any
+ImageContentT: TypeAlias = PathLikeT | BytesLikeT | ImageLikeT
+
+# ImageContentT: TypeAlias = Any
+# StyleT: TypeAlias = Any
 
 # from diffusers import AutoPipelineForText2Image
 
@@ -623,7 +632,29 @@ class cv_release(OnTouchHandler):
         print(f"{x, y=}")
 
 
-class CVView(toga.ImageView, toga.Canvas):
+class CVBackground(DrawingObject):
+    def __init__(self, image: toga.Image, id: str, style: StyleT, **kwargs: Any):
+        self.image = image
+        self.id = id
+        self.style = style
+
+    def _draw(self, impl, **kwargs):
+        impl.push_context(**kwargs)
+        toga.ImageView(self.image, self.id, self.style, kwargs)
+        impl.pop_context(**kwargs)
+
+
+class CVContext(Context):
+    def __init__(self, canvas: toga.Canvas, **kwargs):
+        super().__init__(canvas, kwargs=kwargs)
+
+    def background(self, image, id, style, **kwargs) -> CVBackground:
+        background = CVBackground(image, id, style, **kwargs)
+        self.append(background)
+        return background
+
+
+class CVView(toga.Canvas, toga.ImageView):
     def __init__(
         self,
         image: ImageContentT | None = None,
@@ -631,12 +662,8 @@ class CVView(toga.ImageView, toga.Canvas):
         style: StyleT | None = None,
         on_resize: OnResizeHandler | None = None,
         on_press: OnTouchHandler | None = None,
-        on_activate: OnTouchHandler | None = None,
         on_release: OnTouchHandler | None = None,
         on_drag: OnTouchHandler | None = None,
-        on_alt_press: OnTouchHandler | None = None,
-        on_alt_release: OnTouchHandler | None = None,
-        on_alt_drag: OnTouchHandler | None = None,
         **kwargs,
     ):
         """Create a new image view.
@@ -652,18 +679,89 @@ class CVView(toga.ImageView, toga.Canvas):
         # Prime the image attribute
         self._image = None
 
-        super(toga.ImageView).__init__(image, id, style, **kwargs)
+        # super().__init__(image, id, style, **kwargs)
+        toga.Canvas.__init__(
+            self,
+            id,
+            style,
+            on_resize=on_resize,
+            on_press=on_press,
+            on_release=on_release,
+            on_drag=on_drag,
+            **kwargs,
+        )
+        toga.ImageView.__init__(self, image, id, style, **kwargs)
+        # super().__init__(image=image, id=id, style=style, on_resize=on_resize, on_press=on_press, on_release=on_release, on_drag=on_drag, **kwargs)
+
+        # self.image_view = toga.ImageView(image, id, style, **kwargs)
+
+        self.canvas = toga.Canvas(
+            id,
+            style,
+            on_resize=on_resize,
+            on_press=on_press,
+            on_release=on_release,
+            on_drag=on_drag,
+        )
 
         self.on_resize = on_resize
         self.on_press = on_press
-        self.on_activate = on_activate
         self.on_release = on_release
         self.on_drag = on_drag
-        self.on_alt_press = on_alt_press
-        self.on_alt_release = on_alt_release
-        self.on_alt_drag = on_alt_drag
 
-        self.image = image
+    def _create(self) -> Any:
+        return self.factory.Canvas(interface=self)
+
+    @property
+    def image(self) -> toga.Image | None:
+        """The image to display.
+
+        When setting an image, you can provide any valid
+        [image content][toga.images.ImageContentT] type;
+        or [`None`][] to clear the image view.
+        """
+        return self._image
+
+    @image.setter
+    def image(self, image: ImageContentT) -> None:
+        if isinstance(image, toga.Image):
+            self._image = image
+        elif image is None:
+            self._image = None
+        else:
+            self._image = toga.Image(image)
+
+        self._impl.set_image(self._image)
+        self.refresh()
+
+    @property
+    def on_press(self) -> OnTouchHandler:
+        """The handler invoked when the canvas is pressed. When a mouse is being used,
+        this press will be with the primary (usually the left) mouse button."""
+        return self._on_press
+
+    @on_press.setter
+    def on_press(self, handler: OnTouchHandler) -> None:
+        print(f"Wrapping {handler=}")
+        self._on_press = wrapped_handler(self, handler)
+
+    @property
+    def on_release(self) -> OnTouchHandler:
+        """The handler invoked when a press on the canvas ends."""
+        return self._on_release
+
+    @on_release.setter
+    def on_release(self, handler: OnTouchHandler) -> None:
+        self._on_release = wrapped_handler(self, handler)
+
+    @property
+    def on_drag(self) -> OnTouchHandler:
+        """The handler invoked when the location of a press changes."""
+        return self._on_drag
+
+    @on_drag.setter
+    def on_drag(self, handler: OnTouchHandler) -> None:
+        self._on_drag = wrapped_handler(self, handler)
 
 
 class crop_image(OnPressHandler):
@@ -817,7 +915,7 @@ class confirm_images(OnPressHandler):
                         on_press=crop_press,
                     ),
                     CVView(
-                        img,
+                        image=img,
                         id=f"{str(img_path)}_image",
                         height=image_dimensions().get("height"),
                         width=image_dimensions().get("width"),
