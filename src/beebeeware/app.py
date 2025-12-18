@@ -654,7 +654,7 @@ class CVContext(Context):
         return background
 
 
-class CVView(toga.Canvas, toga.ImageView):
+class CVView(toga.ImageView, toga.Canvas):
     def __init__(
         self,
         image: ImageContentT | None = None,
@@ -681,7 +681,7 @@ class CVView(toga.Canvas, toga.ImageView):
         if isinstance(id, str):
             _id = copy.copy(id)
             self._id = _id
-            id = id.replace("_image", "")
+            # id = id.replace("_image", "")
 
         # super().__init__(image, id, style, **kwargs)
         toga.Canvas.__init__(
@@ -736,7 +736,7 @@ class CVView(toga.Canvas, toga.ImageView):
         else:
             self._image = toga.Image(image)
 
-        self._impl.set_image(self._image)
+        self._impl.Background = self._image
         self.refresh()
 
     @property
