@@ -678,6 +678,10 @@ class CVView(toga.Canvas, toga.ImageView):
         """
         # Prime the image attribute
         self._image = None
+        if isinstance(id, str):
+            _id = copy.copy(id)
+            self._id = _id
+            id = id.replace("_image", "")
 
         # super().__init__(image, id, style, **kwargs)
         toga.Canvas.__init__(
@@ -690,6 +694,7 @@ class CVView(toga.Canvas, toga.ImageView):
             on_drag=on_drag,
             **kwargs,
         )
+
         toga.ImageView.__init__(self, image, id, style, **kwargs)
         # super().__init__(image=image, id=id, style=style, on_resize=on_resize, on_press=on_press, on_release=on_release, on_drag=on_drag, **kwargs)
 
