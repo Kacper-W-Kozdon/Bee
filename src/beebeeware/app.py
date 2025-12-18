@@ -736,7 +736,8 @@ class CVView(toga.ImageView, toga.Canvas):
         else:
             self._image = toga.Image(image)
 
-        self._impl.Background = self._image
+        # self._impl.Background = image
+        self._impl.set_image(image)
         self.refresh()
 
     @property
