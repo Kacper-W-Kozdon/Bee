@@ -32,6 +32,7 @@ import toga.paths
 import toga.sources
 import toga.validators
 from huggingface_hub import hf_hub_download, list_models
+from System.Drawing import Image as WinImage
 from toga.colors import rgb
 from toga.constants import Baseline
 from toga.fonts import SANS_SERIF
@@ -168,10 +169,9 @@ class select_previews(OnSelectHandler):
         self.instance = instance
         self.image_ids = image_ids if isinstance(image_ids, list) else []
 
-    def __call__(self, widget, **kwargs):
+    def __call__(self, widget: toga.Table, **kwargs):
         headings: list[str] = []
         heading: str
-        widget: toga.Table
 
         self.image_ids.clear()
 
@@ -195,8 +195,6 @@ class select_previews(OnSelectHandler):
         self.image_ids.extend(list(map(widget.data.index, image_rows)))
 
         print(f"Selected images: {self.image_ids}")
-
-        return widget
 
 
 @contextlib.contextmanager
@@ -664,6 +662,7 @@ class CVView(toga.ImageView, toga.Canvas):
         on_press: OnTouchHandler | None = None,
         on_release: OnTouchHandler | None = None,
         on_drag: OnTouchHandler | None = None,
+        image_path: str | pathlib.Path = None,
         **kwargs,
     ):
         """Create a new image view.
@@ -684,6 +683,23 @@ class CVView(toga.ImageView, toga.Canvas):
             # id = id.replace("_image", "")
 
         # super().__init__(image, id, style, **kwargs)
+
+        if isinstance(image_path, (str, pathlib.Path)):
+            self._image_path = image_path
+
+        else:
+            _image_path = id.replace("_image", "")
+
+            with pathlib.Path(_image_path) as _path:
+                if not _path.exists():
+                    raise ValueError(
+                        f"The path to the training image could not be retrieved. Provide image_path param or an id param in the form <path_to_the_image.extension>_image. Got {_path=}."
+                    )
+                if not _path.is_file():
+                    raise ValueError(
+                        f"The path to the training image could not be retrieved. Provide image_path param or an id param in the form <path_to_the_image.extension>_image. Got {_path=}."
+                    )
+
         toga.Canvas.__init__(
             self,
             id,
@@ -728,7 +744,7 @@ class CVView(toga.ImageView, toga.Canvas):
         return self._image
 
     @image.setter
-    def image(self, image: ImageContentT) -> None:
+    def image(self, image: ImageContentT | pathlib.Path | str) -> None:
         if isinstance(image, toga.Image):
             self._image = image
         elif image is None:
@@ -736,7 +752,18 @@ class CVView(toga.ImageView, toga.Canvas):
         else:
             self._image = toga.Image(image)
 
-        self._impl.native.Background = image
+        if pathlib.Path(self._image.path).exists():
+            self._impl.native.BackgroundImage = WinImage.FromFile(str(self._image.path))
+        else:
+            self._impl.native.BackgroundImage = WinImage.FromFile(str(self._image_path))
+
+        # area=gtk.Drawingarea()
+
+        # pixbuf=gtk.gdk.pixbuf_new_from_file('background.png')
+        # pixmap, mask=pixbuf.render_pixmap_and_mask()
+
+        # area.window.set_back_pixmap(pixmap, False)
+
         # self._impl.set_image(image)
         self.refresh()
 
@@ -928,6 +955,7 @@ class confirm_images(OnPressHandler):
                         on_press=cv_press(),
                         on_drag=cv_drag(),
                         on_release=cv_release(),
+                        image_path=img_path,
                     ),
                 ],
             )
