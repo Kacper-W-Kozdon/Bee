@@ -25,6 +25,7 @@ from typing import Generator  # noqa
 from typing import OrderedDict  # noqa
 from typing import Any, AsyncGenerator, Callable, TypeAlias, Union  # noqa
 
+import clr
 import cv2 as cv
 import toga
 import toga.handlers
@@ -32,7 +33,6 @@ import toga.paths
 import toga.sources
 import toga.validators
 from huggingface_hub import hf_hub_download, list_models
-from System.Drawing import Image as WinImage
 from toga.colors import rgb
 from toga.constants import Baseline
 from toga.fonts import SANS_SERIF
@@ -46,6 +46,9 @@ from toga.widgets.canvas import OnResizeHandler, OnTouchHandler
 from toga.widgets.canvas.context import Context
 from toga.widgets.canvas.drawingobject import DrawingObject
 from toga.widgets.table import OnSelectHandler
+
+clr.AddReference("System.Drawing")  # noqa
+from System.Drawing import Image as WinImage  # noqa
 
 PathLikeT: TypeAlias = str | os.PathLike
 BytesLikeT: TypeAlias = bytes | bytearray | memoryview

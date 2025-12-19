@@ -4,6 +4,7 @@ diffusers
 huggingface_hub
 lazy_loader
 Pillow
+pythonnet
 toga
 torch
 transformers

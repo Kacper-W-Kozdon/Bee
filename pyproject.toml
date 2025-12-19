@@ -28,6 +28,7 @@ requires = [
     "lazy_loader",
     "cv2",
     "Pillow",
+    "pythonnet",
 ]
 test_requires = [
     "pytest",
