@@ -1,0 +1,366 @@
+import copy
+import os
+import pathlib
+from types import ModuleType
+from typing import Generator  # noqa
+from typing import OrderedDict  # noqa
+from typing import Any, AsyncGenerator, Callable, TypeAlias, Union  # noqa
+
+import clr
+import cv2 as cv
+import toga
+import toga.handlers
+import toga.paths
+import toga.sources
+import toga.validators
+from toga.sources.list_source import Row
+from toga.style.pack import COLUMN, Pack
+from toga.widgets.button import OnPressHandler
+from toga.widgets.canvas import OnTouchHandler
+from toga.widgets.table import OnSelectHandler
+
+from ..widgets.opencv_widgets import CVView
+from .decorators import timing
+from .models_and_configs import get_models_page
+
+clr.AddReference("System.Drawing")  # noqa
+from System.Drawing import Image as WinImage  # noqa
+
+PathLikeT: TypeAlias = str | os.PathLike
+BytesLikeT: TypeAlias = bytes | bytearray | memoryview
+ImageLikeT: TypeAlias = Any
+ImageContentT: TypeAlias = PathLikeT | BytesLikeT | ImageLikeT
+
+# ImageContentT: TypeAlias = Any
+# StyleT: TypeAlias = Any
+
+# from diffusers import AutoPipelineForText2Image
+
+# Source - https://stackoverflow.com/a
+# Posted by Jason Grout
+# Retrieved 2025-11-17, License - CC BY-SA 3.0
+
+startup_libs: list[str] = ["torch", "diffusers"]
+
+diffusers: ModuleType = ModuleType("diffusers")
+torch: ModuleType = ModuleType("torch")
+
+default_pipeline: str = "StableDiffusionPipeline"
+recommended_base: str = "sd-legacy/stable-diffusion-v1-5"
+
+image_dimensions: Callable[..., dict[str, int]] = lambda: {"height": 240, "width": 320}  # noqa: E731
+
+BeeBeeware: type | None = None
+
+recommended_config: dict[str, dict[str, Union[str, float, int, bool]]] = {
+    "base": {
+        "prior_loss_weight": 1.0,
+        "resolution": 512,
+        "no_half_vae": True,
+        "text_encoder_lr": 0.0001,
+    },
+    "small_dataset": {
+        "train_batch_size": 2,
+        "learning_rate": 1e-4,
+        "max_train_steps": 1500,
+        "lr_scheduler": "cosine",
+        "lr_warmup_steps": 150,
+        "network_dim": 32,
+        "network_alpha": 16,
+    },
+    "medium_dataset": {
+        "train_batch_size": 2,
+        "learning_rate": 2e-4,
+        "max_train_steps": 3000,
+        "lr_scheduler": "cosine",
+        "lr_warmup_steps": 300,
+        "network_dim": 32,
+        "network_alpha": 16,
+    },
+    "big_dataset": {
+        "train_batch_size": 2,
+        "learning_rate": 2e-4,
+        "max_train_steps": 4500,
+        "lr_scheduler": "cosine",
+        "lr_warmup_steps": 300,
+        "network_dim": 64,
+        "network_alpha": 32,
+    },
+}
+
+
+class select_previews(OnSelectHandler):
+    def __init__(self, instance=None, image_ids: list[int] | None = None):
+        self.instance = instance
+        self.image_ids = image_ids if isinstance(image_ids, list) else []
+
+    def __call__(self, widget: toga.Table, **kwargs):
+        headings: list[str] = []
+        heading: str
+
+        self.image_ids.clear()
+
+        if not widget.headings:
+            raise ValueError(f"Table widget contained no headings. {widget.headings=}")
+
+        for heading in widget.headings:
+            headings.append(heading.lower().replace(" ", "_"))
+
+        if widget.selection is None:
+            raise ValueError(
+                f"The list of image rows should contain only Row entries. Got {widget.selection}"
+            )
+
+        image_rows: list[Row] = (
+            copy.copy(widget.selection)
+            if isinstance(widget.selection, list)
+            else [copy.copy(widget.selection)]
+        )
+
+        self.image_ids.extend(list(map(widget.data.index, image_rows)))
+
+        print(f"Selected images: {self.image_ids}")
+
+
+@timing
+def get_next(widget: toga.Widget, page: int) -> Union[None, toga.Widget]:
+    next_widget: Union[toga.Widget, None] = None
+
+    if not isinstance(widget, toga.Widget):
+        raise TypeError(
+            f"The widget's type is incorrect. Expected toga.Widget, got {type(widget)=}"
+        )
+
+    match widget.id:
+        case "base_models":
+            next_widget_data = get_models_page(page_num=page)
+            next_widget = toga.Table(
+                id=widget.id, headings=widget.headings, data=next_widget_data
+            )
+        case "lora_models":
+            next_widget_data = get_models_page(page_num=page, tags=["lora"])
+            next_widget = toga.Table(
+                id=widget.id, headings=widget.headings, data=next_widget_data
+            )
+
+    return next_widget
+
+
+@timing
+def get_previous(widget: toga.Widget, page: int) -> Union[None, toga.Widget]:
+    previous_widget: Union[toga.Widget, None] = None
+
+    if not isinstance(widget, toga.Widget):
+        raise TypeError(
+            f"The widget's type is incorrect. Expected toga.Widget, got {type(widget)=}"
+        )
+
+    match widget.id:
+        case "base_models":
+            previous_widget_data = get_models_page(page_num=page)
+            previous_widget = toga.Table(
+                id=widget.id, headings=widget.headings, data=previous_widget_data
+            )
+        case "lora_models":
+            previous_widget_data = get_models_page(page_num=page, tags=["lora"])
+            previous_widget = toga.Table(
+                id=widget.id, headings=widget.headings, data=previous_widget_data
+            )
+
+    return previous_widget
+
+
+class cv_press(OnTouchHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+
+    def __call__(self, widget: toga.Canvas, x: int, y: int, **kwargs: Any) -> None:
+        print(f"{widget.id=}")
+        print(f"{x, y=}")
+
+
+class cv_drag(OnTouchHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+
+    def __call__(self, widget: toga.Canvas, x: int, y: int, **kwargs: Any) -> None:
+        print(f"{widget.id=}")
+        print(f"{x, y=}")
+
+
+class cv_release(OnTouchHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+
+    def __call__(self, widget: toga.Canvas, x: int, y: int, **kwargs: Any) -> None:
+        print(f"{widget.id=}")
+        print(f"{x, y=}")
+
+
+class crop_image(OnPressHandler):
+    def __init__(
+        self,
+        window: toga.Window,
+        source_id: str,
+    ):
+        if window is None:
+            raise ValueError(f"Expected toga.Window instance. Got {type(window)}.")
+        self.window = window
+
+        try:
+            if window.widgets[source_id] is None:
+                raise ValueError(f"Image with widget id {source_id=} was not found.")
+
+        except KeyError as err:
+            raise ValueError(
+                f"Image with widget id {source_id=} was not found."
+            ) from err
+
+        self.source_id = source_id
+
+    def __call__(self, widget, **kwargs):
+        raise NotImplementedError
+
+        image_id = widget.id.replace("_button", "_image")
+
+        if not isinstance(self.window.app, BeeBeeware):
+            raise TypeError(
+                f"Expected app instance to be of the BeeBeeware type. Got {type(self.window.app)=}."
+            )
+
+        dimensions = self.window.app.config.get("image_dimensions")
+
+        if not isinstance(dimensions, dict):
+            raise TypeError(
+                f"Expected type for config['image__dimensions'] is dict[str, int]. Got {type(dimensions)=}."
+            )
+
+        source_path = self.source_id
+        source_image = cv.imread(source_path)  # noqa: F841
+
+        if source_image is None:
+            raise FileExistsError(
+                f"Could not read the {source_image=}. Check if the file's path exists."
+            )
+
+        height = dimensions.get("height")  # noqa: F841
+        width = dimensions.get("width")  # noqa: F841
+
+        if not isinstance(height, int):
+            raise TypeError(f"Expected height type is int. Got {type(height)=}.")
+
+        if not isinstance(width, int):
+            raise TypeError(f"Expected height type is int. Got {type(width)=}.")
+
+        starting_point: tuple[int, ...] = tuple([0, 0])
+
+        frame = (
+            starting_point,
+            (starting_point[0] + width + 2, starting_point[1] + height + 2),
+        )
+        cv.rectangle(source_image, frame[0], frame[1])  # pylint: disable=no-member
+
+        cropping_window = toga.Window(
+            id=f"{image_id}_crop", title=f"Cropping image {self.source_id}"
+        )  # pylint: disable=not-callable
+
+        cropping_box = toga.Box(style=Pack(direction=COLUMN))
+
+        cropping_window.content = cropping_box
+        cropping_window.show()
+
+
+class confirm_images(OnPressHandler):
+    def __init__(
+        self,
+        window: Union[toga.Window, str, None],
+        images_list: list[Union[str, pathlib.Path, None]],
+        image_ids: list[int],
+        source_imgs_list: list[Union[str, pathlib.Path, None]],
+    ):
+        if window is None:
+            raise ValueError(f"Expected toga.Window instance. Got {type(window)}.")
+        self.window = window
+
+        if images_list is None:
+            raise ValueError(f"Expected list[str] instance. Got {type(images_list)}.")
+        self.images_list = images_list
+
+        if image_ids is None:
+            raise ValueError(f"Expected list[int] instance. Got {type(image_ids)}.")
+        self.image_ids = image_ids
+
+        if images_list is None:
+            raise ValueError(
+                f"Expected list[Union[str, pathlib.Path]] instance. Got {type(source_imgs_list)}."
+            )
+        self.source_imgs_list = source_imgs_list
+
+    def __call__(self, widget, **kwargs):
+        table_id = widget.id.replace("_button", "")  # noqa: F841
+        old_view = self.window.widgets[table_id]
+        new_view = toga.Box(id=table_id, style=Pack(direction=COLUMN))
+        parent_: toga.Box | None = self.window.widgets[table_id].parent
+
+        views_paths = [self.images_list[id] for id in self.image_ids]
+        print("Loading previews.")
+
+        if parent_ is None:
+            raise ValueError(
+                f"Expected parent node of the {widget.id=} to be a toga.Box instance. Got {parent_}."
+            )
+
+        for image_id, image in enumerate(views_paths):
+            img_path = pathlib.Path(image)
+            if not img_path.exists():
+                raise LookupError(f"The path invalid. Got {img_path=}")
+            if not img_path.is_file():
+                raise FileNotFoundError(
+                    f"The path does not lead to a file. Got {img_path=}"
+                )
+
+            img = toga.Image(img_path)
+
+            source_img_path: pathlib.Path | str = self.source_imgs_list[image_id]
+            if not source_img_path.exists():
+                raise LookupError(f"The path invalid. Got {source_img_path=}")
+            if not source_img_path.is_file():
+                raise FileNotFoundError(
+                    f"The path does not lead to a file. Got {source_img_path=}"
+                )
+            print(f"{img_path, source_img_path=}")
+            source_img: toga.Image = toga.Image(source_img_path)
+
+            crop_press = self.window.app.aux_buttons.get("Crop_image")
+
+            img_view = toga.Box(
+                id=str(img_path),
+                children=[
+                    toga.ImageView(
+                        source_img,
+                        id=f"{str(source_img_path)}",
+                        height=image_dimensions().get("height"),
+                        width=image_dimensions().get("width"),
+                    ),
+                    toga.Button(
+                        "Crop Image",
+                        id=f"{str(img_path)}_button",
+                        on_press=crop_press,
+                    ),
+                    CVView(
+                        image=img,
+                        id=f"{str(img_path)}_image",
+                        height=image_dimensions().get("height"),
+                        width=image_dimensions().get("width"),
+                        on_press=cv_press(),
+                        on_drag=cv_drag(),
+                        on_release=cv_release(),
+                        image_path=img_path,
+                    ),
+                ],
+            )
+            new_view.add(img_view)
+
+        parent_.replace(old_view, new_view)
+
+        return widget
