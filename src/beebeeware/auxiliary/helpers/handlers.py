@@ -14,7 +14,7 @@ import toga.paths
 import toga.sources
 import toga.validators
 from toga.sources.list_source import Row
-from toga.style.pack import COLUMN, Pack
+from toga.style.pack import COLUMN, ROW, Pack
 from toga.widgets.button import OnPressHandler
 from toga.widgets.canvas import OnTouchHandler
 from toga.widgets.table import OnSelectHandler
@@ -386,8 +386,13 @@ def update_selection(
 
     window_name = window_.title
     id_ = f"{window_name}_file_name"
-    accessors = window_.widgets[id_].items.accessors
-    window_.widgets[id_].items = toga.sources.ListSource(
-        accessors=accessors, data=selection_list
-    )  # type: ignore[arg-type]
+    accessors = window_.widgets[id_].items._accessors  # noqa: F841
+    print(f"Config files found: {selection_list=}")
+    old_selection = window_.widgets[id_]  # type: ignore[arg-type]
+    new_selection = toga.Selection(
+        id=f"{window_name}_file_name", items=selection_list, style=Pack(direction=ROW)
+    )
+
+    window_.widgets[id_].parent.replace(old_selection, new_selection)
+
     # raise NotImplementedError

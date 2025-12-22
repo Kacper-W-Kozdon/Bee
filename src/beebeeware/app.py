@@ -1272,12 +1272,16 @@ class BeeBeeware(toga.App):
         self, task, input_list: list[Union[str, pathlib.Path]] | None = None
     ):
         widget_name: str = task.get_name()
-
         if isinstance(input_list, list):
             input_list.clear()
 
         if task.result():
             print(f"{task.result()=}")
+
+            if isinstance(input_list, list):
+                files = list_files(mypath=task.result())
+                input_list.extend(files)
+                print(f"Files found: {input_list=}.")
 
             match widget_name:
                 case "Save_path" | "Load_path":
@@ -1295,9 +1299,6 @@ class BeeBeeware(toga.App):
 
         else:
             print(f"{task.result()=}")
-
-            if isinstance(input_list, list):
-                input_list.extend(task.result())
 
 
 def main():
