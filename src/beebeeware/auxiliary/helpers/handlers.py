@@ -364,3 +364,30 @@ class confirm_images(OnPressHandler):
         parent_.replace(old_view, new_view)
 
         return widget
+
+
+@timing
+def update_selection(
+    widget: toga.Widget, selection_list: list[Union[str, pathlib.Path]] | None = None
+) -> None:
+    if not isinstance(selection_list, list):
+        raise TypeError(
+            f"Expected selection list to be of the list type. Got {type(selection_list)}."
+        )
+
+    window_: toga.Window | toga.MainWindow | None = widget.window
+    if not isinstance(window_, (toga.Window, toga.MainWindow)):
+        raise TypeError(
+            f"Window is expected to be an instance of toga.Window | toga.MainWindow. Got {type(window_)}."
+        )
+
+    for index, item in enumerate(selection_list):
+        selection_list[index] = str(item)
+
+    window_name = window_.title
+    id_ = f"{window_name}_file_name"
+    accessors = window_.widgets[id_].items.accessors
+    window_.widgets[id_].items = toga.sources.ListSource(
+        accessors=accessors, data=selection_list
+    )  # type: ignore[arg-type]
+    # raise NotImplementedError

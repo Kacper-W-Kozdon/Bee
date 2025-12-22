@@ -41,7 +41,8 @@ from .auxiliary.helpers.handle_files import list_files  # noqa
 from .auxiliary.helpers.handlers import crop_image  # noqa
 from .auxiliary.helpers.handlers import get_next  # noqa
 from .auxiliary.helpers.handlers import get_previous  # noqa
-from .auxiliary.helpers.handlers import confirm_images, select_previews
+from .auxiliary.helpers.handlers import update_selection  # noqa
+from .auxiliary.helpers.handlers import confirm_images, select_previews  # noqa
 from .auxiliary.helpers.models_and_configs import get_models  # noqa
 from .auxiliary.helpers.models_and_configs import get_models_page  # noqa
 from .auxiliary.helpers.models_and_configs import update_config  # noqa
@@ -1049,19 +1050,25 @@ class BeeBeeware(toga.App):
 
         text_window = toga.Window(title=window_name)
 
+        config_files: list[str | pathlib.Path] = []
+
         select_path = toga.Button(
             f"{window_name} path",
             id=f"{window_name}_path_button",
-            on_press=self.path_handler,
+            on_press=partial(self.path_handler, input_list=config_files),
         )
         selected_path = toga.TextInput(
             id=f"{window_name}_path",
             readonly=True,
             value=self.config[f"{window_name}_path"],
+            on_change=partial(update_selection, selection_list=config_files),
         )
 
         entry_box = toga.Box(id=window_name, style=Pack(direction=ROW))
-        text_input_box = toga.TextInput(placeholder=f"{window_name} file name")
+        # text_input_box = toga.TextInput(placeholder=f"{window_name} file name")
+        selection_input_box = toga.Selection(
+            id=f"{window_name}_file_name", items=config_files, style=Pack(direction=ROW)
+        )
         path: str = self.config[f"{window_name}_path"] or default[window_name]
 
         confirm_button = toga.Button(
@@ -1070,11 +1077,11 @@ class BeeBeeware(toga.App):
                 self.close_window,
                 window=text_window,
                 path=path,
-                text_input_box=text_input_box,
+                text_input_box=selection_input_box,
             ),
         )
 
-        entry_box.add(text_input_box)
+        entry_box.add(selection_input_box)
         entry_box.add(confirm_button)
 
         path_box = toga.Box(
@@ -1105,9 +1112,13 @@ class BeeBeeware(toga.App):
     ) -> Config:
         print(f"Closing {window.title=}")
 
-        config_name = f"{text_input_box.value}.json" or "beeconfig.json"
+        if text_input_box.value:
+            config_name = f"{text_input_box.value}.json"
 
-        save_load_path = self.text_window.widgets[f"{window.title}_path"]
+        else:
+            config_name = "beeconfig.json"
+
+        save_load_path = self.text_window.widgets[f"{window.title}_path"].value
 
         path = save_load_path or path
         config_path: Union[str, pathlib.Path] = ""
@@ -1224,7 +1235,11 @@ class BeeBeeware(toga.App):
             toga.InfoDialog("Placeholder title", "Placeholder message.")
         )
 
-    def path_handler(self, widget, **kwargs):
+    def path_handler(
+        self, widget, input_list: list[Union[str, pathlib.Path]] | None = None, **kwargs
+    ):
+        if isinstance(input_list, list):
+            input_list.clear()
         images_path: pathlib.Path = pathlib.Path(
             f"{toga.paths.Paths().config}\\Bee_training_data"
         )
@@ -1250,11 +1265,16 @@ class BeeBeeware(toga.App):
         task_name = str(widget.id).replace("_button", "")
 
         task = asyncio.create_task(self.main_window.dialog(source_path), name=task_name)
-        task.add_done_callback(self.dialog_dismissed)
+        task.add_done_callback(partial(self.dialog_dismissed, input_list=input_list))
         print("Dialog has been created")
 
-    def dialog_dismissed(self, task):
+    def dialog_dismissed(
+        self, task, input_list: list[Union[str, pathlib.Path]] | None = None
+    ):
         widget_name: str = task.get_name()
+
+        if isinstance(input_list, list):
+            input_list.clear()
 
         if task.result():
             print(f"{task.result()=}")
@@ -1275,6 +1295,9 @@ class BeeBeeware(toga.App):
 
         else:
             print(f"{task.result()=}")
+
+            if isinstance(input_list, list):
+                input_list.extend(task.result())
 
 
 def main():

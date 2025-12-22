@@ -1,6 +1,8 @@
 import copy
+import importlib
 import inspect
 import os
+import sys
 import typing
 from types import ModuleType
 from typing import Generator  # noqa
@@ -79,6 +81,19 @@ def update_config(
     model_id: Union[str, None] = None,
     base_or_lora: str = "base",
 ) -> OrderedDict[str, Union[str, int, float, None, list, dict]]:
+    global diffusers
+
+    if "diffusers" not in sys.modules:
+        diffusers = importlib.import_module("diffusers")
+
+    if diffusers != sys.modules["diffusers"]:
+        diffusers = sys.modules["diffusers"]
+
+    # try:
+    #     diffusers.__name__ in sys.modules
+    # except ValueError:
+    #     diffusers = sys.modules["diffusers"]
+
     AutoPipelineForText2Image = diffusers.AutoPipelineForText2Image
     pipe = AutoPipelineForText2Image
 

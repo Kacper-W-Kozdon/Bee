@@ -16,6 +16,10 @@ def list_files(
     valid_formats_ = ["Path", "str", "path", "string", "file"]
     valid_extensions = [".jpg", ".json", ".png", ".jpeg", ""]
 
+    print(
+        f"Listing {extension=} files in the location {mypath=}. Formatting {format_=}."
+    )
+
     if format_ not in valid_formats_:
         raise ValueError(
             f"Incorrect value for the format_ parameter. Expected one of the {valid_formats_=}. Got {format_=}."
