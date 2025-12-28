@@ -29,6 +29,9 @@ requires = [
     "cv2",
     "Pillow",
     "pythonnet",
+    "accelerate",
+    "datasets",
+    "torchvision",
 ]
 test_requires = [
     "pytest",

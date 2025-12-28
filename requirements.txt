@@ -1,5 +1,7 @@
+accelerate
 briefcase
 cv2
+datasets
 diffusers
 huggingface_hub
 lazy_loader
@@ -7,4 +9,5 @@ Pillow
 pythonnet
 toga
 torch
+torchvision
 transformers
