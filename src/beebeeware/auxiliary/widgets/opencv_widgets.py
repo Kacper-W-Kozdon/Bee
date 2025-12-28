@@ -19,6 +19,7 @@ from toga.widgets.canvas.drawingobject import DrawingObject
 
 clr.AddReference("System.Drawing")  # noqa
 from System.Drawing import Image as WinImage  # noqa
+from System.Drawing import Size as WinSize  # noqa
 
 PathLikeT: TypeAlias = str | os.PathLike
 BytesLikeT: TypeAlias = bytes | bytearray | memoryview
@@ -53,12 +54,14 @@ class CVView(toga.ImageView, toga.Canvas):
         self,
         image: ImageContentT | None = None,
         id: str | None = None,
+        height: int | None = None,
+        width: int | None = None,
         style: StyleT | None = None,
         on_resize: OnResizeHandler | None = None,
         on_press: OnTouchHandler | None = None,
         on_release: OnTouchHandler | None = None,
         on_drag: OnTouchHandler | None = None,
-        image_path: str | pathlib.Path = None,
+        image_path: str | pathlib.Path | None = None,
         **kwargs,
     ):
         """Create a new image view.
@@ -121,10 +124,13 @@ class CVView(toga.ImageView, toga.Canvas):
             on_drag=on_drag,
         )
 
-        self.on_resize = on_resize
-        self.on_press = on_press
-        self.on_release = on_release
-        self.on_drag = on_drag
+        self.height = height
+        self.width = width
+
+        self.on_resize = on_resize  # type: ignore
+        self.on_press = on_press  # type: ignore
+        self.on_release = on_release  # type: ignore
+        self.on_drag = on_drag  # type: ignore
 
     def _create(self) -> Any:
         return self.factory.Canvas(interface=self)
@@ -148,10 +154,33 @@ class CVView(toga.ImageView, toga.Canvas):
         else:
             self._image = toga.Image(image)
 
+        width, height = 0, 0
+
+        if isinstance(self.height, (int, float)):
+            height = int(self.height)
+
+        if isinstance(self.width, (int, float)):
+            width = int(self.width)
+
         if pathlib.Path(self._image.path).exists():
-            self._impl.native.BackgroundImage = WinImage.FromFile(str(self._image.path))
+            loaded_image = WinImage.FromFile(str(self._image.path))
+
+            if any([not width, not height]):
+                height = loaded_image.height
+                width = loaded_image.width
+                print(f"Using original dimensions of the image. {width, height=}.")
+
+            background = WinImage(loaded_image, WinSize(width, height))
+            self._impl.native.BackgroundImage = background
         else:
-            self._impl.native.BackgroundImage = WinImage.FromFile(str(self._image_path))
+            loaded_image = WinImage.FromFile(str(self._image_path))
+            if any([not width, not height]):
+                height = loaded_image.height
+                width = loaded_image.width
+                print(f"Using original dimensions of the image. {width, height=}.")
+
+            background = WinImage(loaded_image, WinSize(width, height))
+            self._impl.native.BackgroundImage = background
 
         # area=gtk.Drawingarea()
 

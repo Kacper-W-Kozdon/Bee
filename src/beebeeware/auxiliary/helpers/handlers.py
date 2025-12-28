@@ -296,7 +296,7 @@ class confirm_images(OnPressHandler):
             )
         self.source_imgs_list = source_imgs_list
 
-    def __call__(self, widget, **kwargs):
+    def __call__(self, widget, **kwargs) -> None:
         table_id = widget.id.replace("_button", "")  # noqa: F841
         old_view = self.window.widgets[table_id]
         new_view = toga.Box(id=table_id, style=Pack(direction=COLUMN))
@@ -320,6 +320,13 @@ class confirm_images(OnPressHandler):
                 )
 
             img = toga.Image(img_path)
+            img_height = image_dimensions().get("height")
+            if not isinstance(img_height, int):
+                raise TypeError(
+                    f"Expected image height to be an int. Got {type(img_height)=}"
+                )
+
+            scaling_factor = img_height / img.height
 
             source_img_path: pathlib.Path | str = self.source_imgs_list[image_id]
             if not source_img_path.exists():
@@ -351,7 +358,7 @@ class confirm_images(OnPressHandler):
                         image=img,
                         id=f"{str(img_path)}_image",
                         height=image_dimensions().get("height"),
-                        width=image_dimensions().get("width"),
+                        width=int(scaling_factor * img.width),
                         on_press=cv_press(),
                         on_drag=cv_drag(),
                         on_release=cv_release(),
@@ -363,7 +370,7 @@ class confirm_images(OnPressHandler):
 
         parent_.replace(old_view, new_view)
 
-        return widget
+        # return widget
 
 
 @timing
