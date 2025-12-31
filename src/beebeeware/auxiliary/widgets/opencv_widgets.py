@@ -166,8 +166,8 @@ class CVView(toga.ImageView, toga.Canvas):
             loaded_image = WinImage.FromFile(str(self._image.path))
 
             if any([not width, not height]):
-                height = loaded_image.height
-                width = loaded_image.width
+                height = loaded_image.Height
+                width = loaded_image.Width
                 print(f"Using original dimensions of the image. {width, height=}.")
 
             background = WinImage(loaded_image, WinSize(width, height))
@@ -175,8 +175,8 @@ class CVView(toga.ImageView, toga.Canvas):
         else:
             loaded_image = WinImage.FromFile(str(self._image_path))
             if any([not width, not height]):
-                height = loaded_image.height
-                width = loaded_image.width
+                height = loaded_image.Height
+                width = loaded_image.Width
                 print(f"Using original dimensions of the image. {width, height=}.")
 
             background = WinImage(loaded_image, WinSize(width, height))
