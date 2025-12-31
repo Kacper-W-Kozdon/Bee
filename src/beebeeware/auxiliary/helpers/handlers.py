@@ -181,7 +181,7 @@ class cv_press(OnTouchHandler):
         if len(widget.context) > 0:
             widget.context.clear()
 
-        with widget.context.Stroke(color="REBECCAPURPLE", line_width=4.0) as stroke:
+        with widget.context.Stroke(color="RED", line_width=4.0) as stroke:
             stroke.rect(x=x, y=y, width=15, height=15)
         widget.redraw()
 
