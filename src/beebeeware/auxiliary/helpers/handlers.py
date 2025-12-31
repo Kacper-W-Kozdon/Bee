@@ -177,6 +177,13 @@ class cv_press(OnTouchHandler):
     def __call__(self, widget: toga.Canvas, x: int, y: int, **kwargs: Any) -> None:
         print(f"{widget.id=}")
         print(f"{x, y=}")
+        print(f"{widget.context}")
+        if len(widget.context) > 0:
+            widget.context.clear()
+
+        with widget.context.Stroke(color="REBECCAPURPLE", line_width=4.0) as stroke:
+            stroke.rect(x=x, y=y, width=15, height=15)
+        widget.redraw()
 
 
 class cv_drag(OnTouchHandler):
@@ -186,6 +193,13 @@ class cv_drag(OnTouchHandler):
     def __call__(self, widget: toga.Canvas, x: int, y: int, **kwargs: Any) -> None:
         print(f"{widget.id=}")
         print(f"{x, y=}")
+        widget.context.rect(x=x, y=y, width=15, height=15)
+        if len(widget.context) > 0:
+            widget.context.clear()
+
+        with widget.context.Stroke(color="REBECCAPURPLE", line_width=4.0) as stroke:
+            stroke.rect(x=x, y=y, width=15, height=15)
+        widget.redraw()
 
 
 class cv_release(OnTouchHandler):
@@ -195,6 +209,13 @@ class cv_release(OnTouchHandler):
     def __call__(self, widget: toga.Canvas, x: int, y: int, **kwargs: Any) -> None:
         print(f"{widget.id=}")
         print(f"{x, y=}")
+        widget.context.rect(x=x, y=y, width=15, height=15)
+        if len(widget.context) > 0:
+            widget.context.clear()
+
+        with widget.context.Stroke(color="GREEN", line_width=4.0) as stroke:
+            stroke.rect(x=x, y=y, width=15, height=15)
+        widget.redraw()
 
 
 class crop_image(OnPressHandler):
