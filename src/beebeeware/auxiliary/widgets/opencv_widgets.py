@@ -18,6 +18,7 @@ from toga.widgets.canvas.context import Context
 from toga.widgets.canvas.drawingobject import DrawingObject
 
 clr.AddReference("System.Drawing")  # noqa
+from System.Drawing import Bitmap as WinBmap  # noqa
 from System.Drawing import Image as WinImage  # noqa
 from System.Drawing import Size as WinSize  # noqa
 
@@ -75,7 +76,11 @@ class CVView(toga.ImageView, toga.Canvas):
         :param kwargs: Initial style properties.
         """
         # Prime the image attribute
+
+        self.height_ = height
+        self.width_ = width
         self._image = None
+        # print(f"{height, width=}")
         if isinstance(id, str):
             _id = copy.copy(id)
             self._id = _id
@@ -155,12 +160,13 @@ class CVView(toga.ImageView, toga.Canvas):
             self._image = toga.Image(image)
 
         width, height = 0, 0
+        print(f"{self.height_=}")
 
-        if isinstance(self.height, (int, float)):
-            height = int(self.height)
+        if isinstance(self.height_, (int, float)):
+            height = int(self.height_)
 
-        if isinstance(self.width, (int, float)):
-            width = int(self.width)
+        if isinstance(self.width_, (int, float)):
+            width = int(self.width_)
 
         if pathlib.Path(self._image.path).exists():
             loaded_image = WinImage.FromFile(str(self._image.path))
@@ -170,7 +176,10 @@ class CVView(toga.ImageView, toga.Canvas):
                 width = loaded_image.Width
                 print(f"Using original dimensions of the image. {width, height=}.")
 
-            background = WinImage(loaded_image, WinSize(width, height))
+            size = WinSize(width, height)
+            # print(f"{size=}")
+            bitmap = WinBmap(loaded_image, size)
+            background = bitmap
             self._impl.native.BackgroundImage = background
         else:
             loaded_image = WinImage.FromFile(str(self._image_path))
@@ -179,7 +188,10 @@ class CVView(toga.ImageView, toga.Canvas):
                 width = loaded_image.Width
                 print(f"Using original dimensions of the image. {width, height=}.")
 
-            background = WinImage(loaded_image, WinSize(width, height))
+            size = WinSize(width, height)
+            # print(f"{size=}")
+            bitmap = WinBmap(loaded_image, size)
+            background = bitmap
             self._impl.native.BackgroundImage = background
 
         # area=gtk.Drawingarea()
