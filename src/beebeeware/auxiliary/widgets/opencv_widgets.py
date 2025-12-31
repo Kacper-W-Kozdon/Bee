@@ -77,8 +77,8 @@ class CVView(toga.ImageView, toga.Canvas):
         """
         # Prime the image attribute
 
-        self.height_ = height
-        self.width_ = width
+        self.height_ = height  # Needed a separate attribute to avoid clashing with height and width coming from style=Pack().
+        self.width_ = width  # Needed a separate attribute to avoid clashing with height and width coming from style=Pack().
         self._image = None
         # print(f"{height, width=}")
         if isinstance(id, str):
@@ -129,8 +129,8 @@ class CVView(toga.ImageView, toga.Canvas):
             on_drag=on_drag,
         )
 
-        self.height = height
-        self.width = width
+        self.height = height  # Used by Pack() from style kwarg.
+        self.width = width  # Used by Pack() from style kwarg.
 
         self.on_resize = on_resize  # type: ignore
         self.on_press = on_press  # type: ignore
