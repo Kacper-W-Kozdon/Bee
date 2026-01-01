@@ -1050,7 +1050,7 @@ class BeeBeeware(toga.App):
         old_view = main_window.widgets[container.id]
         prev_view = get_previous(old_view, page)
         if prev_view is None:
-            main_window.dialog(
+            dialog = main_window.dialog(  # noqa: F841
                 toga.InfoDialog("Error", "Could not retrieve the previous view.")
             )
             raise TypeError(
