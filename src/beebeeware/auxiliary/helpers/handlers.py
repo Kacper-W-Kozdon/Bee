@@ -341,13 +341,13 @@ class cv_release(OnTouchHandler):
             int(point1[1] + image_dimensions()["height"]),
         )
 
-        og_img_dimensions = (
-            widget._impl.native.Background.Width,
-            widget._impl.native.Background.Height,
+        scaled_img_dimensions = (
+            widget._impl.native.BackgroundImage.Width,
+            widget._impl.native.BackgroundImage.Height,
         )
 
         print(
-            f"Frame cropping points: {point1=} and {point2=}.\nOriginal image dimensions {og_img_dimensions=}."
+            f"Frame cropping points: {point1=} and {point2=}.\nOriginal image dimensions {scaled_img_dimensions=}."
         )
 
         try:
