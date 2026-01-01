@@ -35,6 +35,7 @@ from toga.style.pack import CENTER, COLUMN, ROW, Pack
 from toga.widgets import textinput
 from toga.widgets.canvas import OnTouchHandler
 from toga.widgets.table import OnSelectHandler
+from toga.window import FilteredWidgetRegistry
 
 from .auxiliary.helpers.decorators import timing  # noqa
 from .auxiliary.helpers.handle_files import list_files  # noqa
@@ -1018,32 +1019,57 @@ class BeeBeeware(toga.App):
         self,
         widget,
         container: Union[toga.Box, toga.Table, None] = None,
-        page_id: [None, str] = None,
+        page_id: Union[None, str] = None,
     ) -> Union[toga.Box, toga.Table, None]:
         # print(f"{container.id=}, {container.id in self.main_window.content.children=}")
         # print(f"{self.main_window.widgets[container.id]=}")
         # print(f"{self.main_window.widgets[container.id].data=}")
-        page = max(int(self.main_window.widgets[page_id].text) - 1, 1)
+        main_window = self.main_window
+
+        if not isinstance(main_window, toga.MainWindow):
+            raise TypeError(f"Expected toga.MainWindow instance. Got {main_window=}.")
+        main_window_widgets = main_window.widgets
+
+        if not isinstance(main_window_widgets, FilteredWidgetRegistry):
+            raise TypeError(
+                f"Main window's widgets are not in a FilteredWidgetRegistry. Got {type(main_window_widgets)=}."
+            )
+
+        if not isinstance(page_id, str):
+            raise TypeError(f"Expected page_id type to be str. Got {type(page_id)=}.")
+
+        page = max(int(main_window_widgets[page_id].text) - 1, 1)
 
         # prev_view = toga.Table(headings=headings, data=data)
 
-        old_view = self.main_window.widgets[container.id]
+        if not isinstance(container, (toga.Table, toga.Box)):
+            raise TypeError(
+                f"Expected the container to be an instance of toga.Box | toga.Table. Got {type(container)=}."
+            )
+
+        old_view = main_window.widgets[container.id]
         prev_view = get_previous(old_view, page)
         if prev_view is None:
-            self.main_window.dialog(
+            main_window.dialog(
                 toga.InfoDialog("Error", "Could not retrieve the previous view.")
             )
             raise TypeError(
-                f"Next view is expected to be of the type toga.Widget. Got {type(prev_view)}"
+                f"Next view is expected to be of the type toga.Widget. Got {type(prev_view)=}."
             )
 
-        self.main_window.widgets[container.id].parent.replace(old_view, prev_view)
+        container_parent = main_window_widgets[container.id].parent
+        if not isinstance(container_parent, toga.Box):
+            raise TypeError(
+                f"Expected the container's parent to be a toga.Box. Got {type(container_parent)=}."
+            )
+
+        container_parent.replace(old_view, prev_view)
         # for item in data:
         #     self.main_window.widgets[container.id].data.append(item)
 
-        self.main_window.widgets[page_id].text = str(int(page))
+        main_window_widgets[page_id].text = str(int(page))
         # print(f"{dir(self.main_window.widgets)=}")
-        self.main_window.show()
+        main_window.show()
         return prev_view
 
     def text_input(self, widget, window_name: str = "") -> toga.Window:
@@ -1057,7 +1083,7 @@ class BeeBeeware(toga.App):
         for _, path in default.items():
             if not pathlib.Path(path).exists():
                 pathlib.Path(path).mkdir()
-
+        # pylint: disable-next=not-callable
         text_window = toga.Window(title=window_name)
 
         config_files: list[str | pathlib.Path] = []
@@ -1070,7 +1096,7 @@ class BeeBeeware(toga.App):
         selected_path = toga.TextInput(
             id=f"{window_name}_path",
             readonly=True,
-            value=self.config[f"{window_name}_path"],
+            value=str(self.config[f"{window_name}_path"]),
             on_change=partial(update_selection, selection_list=config_files),
         )
 
@@ -1079,7 +1105,7 @@ class BeeBeeware(toga.App):
         selection_input_box = toga.Selection(
             id=f"{window_name}_file_name", items=config_files, style=Pack(direction=ROW)
         )
-        path: str = self.config[f"{window_name}_path"] or default[window_name]
+        path: str = str(self.config[f"{window_name}_path"]) or default[window_name]
 
         confirm_button = toga.Button(
             "Confirm",
@@ -1119,7 +1145,7 @@ class BeeBeeware(toga.App):
         path: str,
         text_input_box: toga.TextInput,
         config: Config = Config(),
-    ) -> Config:
+    ) -> None:
         print(f"Closing {window.title=}")
 
         if text_input_box.value:
@@ -1198,7 +1224,7 @@ class BeeBeeware(toga.App):
                 print(f"Config file saved at {config_path=}")
 
         window.close()
-        return config
+        # return config
 
     def draw_text(self, widget):
         print("Writing on canvas.")
