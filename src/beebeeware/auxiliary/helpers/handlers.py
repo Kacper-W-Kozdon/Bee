@@ -306,7 +306,14 @@ class cv_release(OnTouchHandler):
             int(point1[1] + image_dimensions()["height"]),
         )
 
-        print(f"Frame cropping points: {point1=} and {point2=}")
+        og_img_dimensions = (
+            widget._impl.native.Background.Width,
+            widget._impl.native.Background.Height,
+        )
+
+        print(
+            f"Frame cropping points: {point1=} and {point2=}.\nOriginal image dimensions {og_img_dimensions=}."
+        )
 
         widget.redraw()
 
