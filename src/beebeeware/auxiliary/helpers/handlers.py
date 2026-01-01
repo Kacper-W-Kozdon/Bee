@@ -178,11 +178,39 @@ class cv_press(OnTouchHandler):
         print(f"{widget.id=}")
         print(f"{x, y=}")
         print(f"{widget.context}")
+
+        frame_size: dict[str, int] = {
+            "height": int(image_dimensions()["height"] * widget.scaling_factor),
+            "width": int(image_dimensions()["width"] * widget.scaling_factor),
+        }
+
         if len(widget.context) > 0:
             widget.context.clear()
 
         with widget.context.Stroke(color="RED", line_width=4.0) as stroke:
-            stroke.rect(x=x, y=y, width=15, height=15)
+            min_y, min_x = 0, 0
+            max_y = widget._impl.native.BackgroundImage.Height
+            max_x = widget._impl.native.BackgroundImage.Width
+
+            if x + frame_size["width"] >= max_x:
+                x = max_x - frame_size["width"]
+
+            if x < min_x:
+                x = min_x
+
+            if y + frame_size["height"] >= max_y:
+                y = max_y - frame_size["height"]
+
+            if y < min_y:
+                y = min_y
+
+            stroke.rect(
+                x=x, y=y, width=frame_size["width"], height=frame_size["height"]
+            )
+
+        widget.frame_x = x
+        widget.frame_y = y
+
         widget.redraw()
 
 
@@ -193,12 +221,39 @@ class cv_drag(OnTouchHandler):
     def __call__(self, widget: toga.Canvas, x: int, y: int, **kwargs: Any) -> None:
         print(f"{widget.id=}")
         print(f"{x, y=}")
-        widget.context.rect(x=x, y=y, width=15, height=15)
+
+        frame_size: dict[str, int] = {
+            "height": int(image_dimensions()["height"] * widget.scaling_factor),
+            "width": int(image_dimensions()["width"] * widget.scaling_factor),
+        }
+
         if len(widget.context) > 0:
             widget.context.clear()
 
         with widget.context.Stroke(color="REBECCAPURPLE", line_width=4.0) as stroke:
-            stroke.rect(x=x, y=y, width=15, height=15)
+            min_y, min_x = 0, 0
+            max_y = widget._impl.native.BackgroundImage.Height
+            max_x = widget._impl.native.BackgroundImage.Width
+
+            if x + frame_size["width"] >= max_x:
+                x = max_x - frame_size["width"]
+
+            if x < min_x:
+                x = min_x
+
+            if y + frame_size["height"] >= max_y:
+                y = max_y - frame_size["height"]
+
+            if y < min_y:
+                y = min_y
+
+            stroke.rect(
+                x=x, y=y, width=frame_size["width"], height=frame_size["height"]
+            )
+
+        widget.frame_x = x
+        widget.frame_y = y
+
         widget.redraw()
 
 
@@ -209,12 +264,50 @@ class cv_release(OnTouchHandler):
     def __call__(self, widget: toga.Canvas, x: int, y: int, **kwargs: Any) -> None:
         print(f"{widget.id=}")
         print(f"{x, y=}")
-        widget.context.rect(x=x, y=y, width=15, height=15)
+
+        frame_size: dict[str, int] = {
+            "height": int(image_dimensions()["height"] * widget.scaling_factor),
+            "width": int(image_dimensions()["width"] * widget.scaling_factor),
+        }
+
         if len(widget.context) > 0:
             widget.context.clear()
 
         with widget.context.Stroke(color="GREEN", line_width=4.0) as stroke:
-            stroke.rect(x=x, y=y, width=15, height=15)
+            min_y, min_x = 0, 0
+            max_y = widget._impl.native.BackgroundImage.Height
+            max_x = widget._impl.native.BackgroundImage.Width
+
+            if x + frame_size["width"] >= max_x:
+                x = max_x - frame_size["width"]
+
+            if x < min_x:
+                x = min_x
+
+            if y + frame_size["height"] >= max_y:
+                y = max_y - frame_size["height"]
+
+            if y < min_y:
+                y = min_y
+
+            stroke.rect(
+                x=x, y=y, width=frame_size["width"], height=frame_size["height"]
+            )
+
+        widget.frame_x = x
+        widget.frame_y = y
+
+        point1 = (
+            int(1 / widget.scaling_factor * widget.frame_x),
+            int(1 / widget.scaling_factor * widget.frame_y),
+        )
+        point2 = (
+            int(point1[0] + image_dimensions()["width"]),
+            int(point1[1] + image_dimensions()["height"]),
+        )
+
+        print(f"Frame cropping points: {point1=} and {point2=}")
+
         widget.redraw()
 
 
@@ -384,6 +477,7 @@ class confirm_images(OnPressHandler):
                         on_drag=cv_drag(),
                         on_release=cv_release(),
                         image_path=img_path,
+                        scaling_factor=scaling_factor,
                     ),
                 ],
             )

@@ -63,6 +63,7 @@ class CVView(toga.ImageView, toga.Canvas):
         on_release: OnTouchHandler | None = None,
         on_drag: OnTouchHandler | None = None,
         image_path: str | pathlib.Path | None = None,
+        scaling_factor: float | None = None,
         **kwargs,
     ):
         """Create a new image view.
@@ -136,6 +137,19 @@ class CVView(toga.ImageView, toga.Canvas):
         self.on_press = on_press  # type: ignore
         self.on_release = on_release  # type: ignore
         self.on_drag = on_drag  # type: ignore
+
+        if not isinstance(scaling_factor, (int, float)):
+            raise TypeError(
+                f"Expected type of the scaling factor is int or float. Got {type(scaling_factor)=}."
+            )
+
+        self.scaling_factor = float(scaling_factor)
+        self.frame_x: int | None = (
+            None  # Raw values before scaling back to the original size of the image.
+        )
+        self.frame_y: int | None = (
+            None  # Raw values before scaling back to the original size of the image.
+        )
 
     def _create(self) -> Any:
         return self.factory.Canvas(interface=self)
