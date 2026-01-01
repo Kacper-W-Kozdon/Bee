@@ -529,8 +529,8 @@ class BeeBeeware(toga.App):
                 self.extensions = (
                     [".json"] if not isinstance(extensions, list) else extensions
                 )
-                self.files = files
-                self.img_previews = images
+                self.files = files  # Paths to the source images.
+                self.img_previews = images  # Paths to the copies of the images. Can be overwritten with edits/crops.
                 self.destination = (
                     pathlib.Path(destination)
                     if destination is not None
@@ -538,7 +538,7 @@ class BeeBeeware(toga.App):
                 )
                 self.instance = instance
 
-            def __call__(self, widget: toga.TextInput, **kwargs) -> toga.TextInput:
+            def __call__(self, widget: toga.TextInput, **kwargs) -> None:
                 path: pathlib.Path = pathlib.Path(widget.value)
                 destination_path: pathlib.Path = self.destination
 
@@ -552,7 +552,7 @@ class BeeBeeware(toga.App):
                     if confirmation:
                         path.mkdir()
                     else:
-                        return widget
+                        return None
 
                 if not destination_path.exists():
                     confirmation = toga.ConfirmDialog(
@@ -562,7 +562,7 @@ class BeeBeeware(toga.App):
                     if confirmation:
                         destination_path.mkdir()
                     else:
-                        return widget
+                        return None
 
                 files_to_clear = list_files(destination_path, extension="")
 
@@ -619,6 +619,9 @@ class BeeBeeware(toga.App):
                 self.files.extend(files_)
                 self.img_previews.extend(images_list_)
 
+                print(f"Source paths: {self.files=}.")
+                print(f"Destination paths: {self.img_previews=}.")
+
                 container_id: str = "files_table"
                 old_view: toga.Table = self.instance.main_window.widgets[container_id]
                 next_view: toga.Table = toga.Table(
@@ -632,7 +635,7 @@ class BeeBeeware(toga.App):
                     old_view, next_view
                 )
 
-                return widget
+                return None
 
         class check_path_change(textinput.OnChangeHandler):
             def __init__(
@@ -648,8 +651,8 @@ class BeeBeeware(toga.App):
                 self.extensions = (
                     [".json"] if not isinstance(extensions, list) else extensions
                 )
-                self.files = files
-                self.img_previews = images
+                self.files = files  # Paths to the source images.
+                self.img_previews = images  # Paths to the copies of the images. Can be overwritten with edits/crops.
                 self.destination = (
                     pathlib.Path(destination)
                     if destination is not None
@@ -657,7 +660,7 @@ class BeeBeeware(toga.App):
                 )
                 self.instance = instance
 
-            def __call__(self, widget: toga.TextInput, **kwargs) -> toga.TextInput:
+            def __call__(self, widget: toga.TextInput, **kwargs) -> None:
                 path: pathlib.Path = pathlib.Path(widget.value)
                 destination_path: pathlib.Path = self.destination
 
@@ -669,7 +672,7 @@ class BeeBeeware(toga.App):
                     if confirmation:
                         path.mkdir()
                     else:
-                        return widget
+                        return None
 
                 if not destination_path.exists():
                     confirmation = toga.ConfirmDialog(
@@ -679,7 +682,7 @@ class BeeBeeware(toga.App):
                     if confirmation:
                         destination_path.mkdir()
                     else:
-                        return widget
+                        return None
 
                 files_to_clear = list_files(destination_path, extension="")
 
@@ -735,6 +738,9 @@ class BeeBeeware(toga.App):
 
                 self.files.extend(files_)
                 self.img_previews.extend(images_list_)
+
+                print(f"Source paths: {self.files=}.")
+                print(f"Destination paths: {self.img_previews=}.")
 
                 container_id: str = "files_table"
                 old_view: toga.Table = self.instance.main_window.widgets[container_id]
@@ -751,7 +757,7 @@ class BeeBeeware(toga.App):
                     old_view, next_view
                 )
 
-                return widget
+                # return widget
 
         images_path: pathlib.Path = pathlib.Path(
             f"{toga.paths.Paths().config}\\Bee_training_data"
@@ -760,8 +766,12 @@ class BeeBeeware(toga.App):
         if not images_path.exists():
             images_path.mkdir()
 
-        files_list: list[Union[str, pathlib.Path, None]] = self.files_list
-        images_list: list[Union[None, str, pathlib.Path]] = self.images_list
+        files_list: list[Union[str, pathlib.Path, None]] = (
+            self.files_list
+        )  # Paths to the source images.
+        images_list: list[Union[None, str, pathlib.Path]] = (
+            self.images_list
+        )  # Paths to the copies of the images. Can be overwritten with edits/crops.
 
         selected_path = toga.TextInput(  # noqa: F841
             id="source_path",
@@ -808,7 +818,7 @@ class BeeBeeware(toga.App):
             id="files_table",
             style=Pack(direction=COLUMN),
             headings=["Source Images", "Training Previews"],
-            data=zip(files_list, images_list),
+            data=zip(files_list, images_list),  # zip(source_paths, training_data_paths)
             on_select=select_previews(self, image_ids),
             multiple_select=True,
         )
@@ -827,9 +837,9 @@ class BeeBeeware(toga.App):
             id="confirm_images_button",
             on_press=confirm_images_press(
                 window=self.main_window,
-                images_list=images_list,
+                images_list=images_list,  # Training data paths.
                 image_ids=image_ids,
-                source_imgs_list=files_list,
+                source_imgs_list=files_list,  # Source images paths.
             ),
         )
 

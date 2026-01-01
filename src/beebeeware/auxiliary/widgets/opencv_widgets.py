@@ -64,6 +64,7 @@ class CVView(toga.ImageView, toga.Canvas):
         on_drag: OnTouchHandler | None = None,
         image_path: str | pathlib.Path | None = None,
         scaling_factor: float | None = None,
+        source_path: str | pathlib.Path | None = None,
         **kwargs,
     ):
         """Create a new image view.
@@ -88,6 +89,12 @@ class CVView(toga.ImageView, toga.Canvas):
             # id = id.replace("_image", "")
 
         # super().__init__(image, id, style, **kwargs)
+
+        if not isinstance(source_path, (str, pathlib.Path)):
+            raise TypeError(
+                f"The path to the source image is expected to be a str or a pathlib.Path. Got {type(source_path)=}."
+            )
+        self._source_path = source_path
 
         if isinstance(image_path, (str, pathlib.Path)):
             self._image_path = image_path

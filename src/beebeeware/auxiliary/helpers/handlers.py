@@ -257,6 +257,41 @@ class cv_drag(OnTouchHandler):
         widget.redraw()
 
 
+def update_crops(widget: toga.Widget | None = None) -> None:
+    if not isinstance(widget, toga.Widget):
+        raise TypeError(f"Expected toga.Widget instance. Got {type(widget)=}.")
+
+    crop_and_source_box: toga.Widget | None = widget.parent
+
+    if not isinstance(crop_and_source_box, toga.Widget):
+        raise TypeError(
+            f"Something went wrong. toga.Box containing images was not found. Got {crop_and_source_box=}."
+        )
+
+    content: list[toga.Widget] = crop_and_source_box.children
+
+    img_path = widget._image_path  # noqa: F841
+    source_path = widget._source_path  # noqa: F841
+    frame_x = widget.frame_x  # noqa: F841
+    frame_y = widget.frame_y  # noqa: F841
+    scaling_factor = widget.scaling_factor  # noqa: F841
+    width, height = image_dimensions()["width"], image_dimensions()["height"]  # noqa: F841
+
+    point1 = frame_x * 1 / scaling_factor, frame_y * 1 / scaling_factor
+    point2 = point1[0] + width, point1[1] + height  # noqa: F841
+
+    if content:
+        if not isinstance(content[0], toga.ImageView):
+            raise TypeError(
+                f"Expected the first element of the box to be a toga.ImageView instance. Got {content[0]=}."
+            )
+        content[
+            0
+        ].refresh()  # Leftmost widget in the box. Corresponds to the cropped image.
+
+    raise NotImplementedError
+
+
 class cv_release(OnTouchHandler):
     def __init__(self, *args, **kwargs):
         super().__init__()
@@ -314,6 +349,11 @@ class cv_release(OnTouchHandler):
         print(
             f"Frame cropping points: {point1=} and {point2=}.\nOriginal image dimensions {og_img_dimensions=}."
         )
+
+        try:
+            update_crops(widget)
+        except NotImplementedError as err:
+            print(f"{err}. Function update_crops() needs to be implemented.")
 
         widget.redraw()
 
@@ -395,9 +435,13 @@ class confirm_images(OnPressHandler):
     def __init__(
         self,
         window: Union[toga.Window, str, None],
-        images_list: list[Union[str, pathlib.Path, None]],
+        images_list: list[
+            Union[str, pathlib.Path, None]
+        ],  # Paths to the copies of the images in the training data folder. Can be overwritten with crops.
         image_ids: list[int],
-        source_imgs_list: list[Union[str, pathlib.Path, None]],
+        source_imgs_list: list[
+            Union[str, pathlib.Path, None]
+        ],  # Paths to the source images. Do not overwrite the images.
     ):
         if window is None:
             raise ValueError(f"Expected toga.Window instance. Got {type(window)}.")
@@ -484,6 +528,7 @@ class confirm_images(OnPressHandler):
                         on_drag=cv_drag(),
                         on_release=cv_release(),
                         image_path=img_path,
+                        source_path=source_img_path,
                         scaling_factor=scaling_factor,
                     ),
                 ],
