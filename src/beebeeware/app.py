@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 """
 An app for Bee.
 """
@@ -16,19 +17,19 @@ import typing
 from dataclasses import dataclass, field
 from functools import partial, wraps
 from io import StringIO
-from types import ModuleType
+from types import ModuleType  # pylint: disable-next=unused-import
 from typing import Generator  # noqa
 from typing import OrderedDict  # noqa
 from typing import Any, AsyncGenerator, Callable, TypeAlias, Union  # noqa
 
-import clr
+import clr  # type: ignore
 import toga
 import toga.handlers
 import toga.paths
 import toga.sources
 import toga.validators
 from huggingface_hub import hf_hub_download
-from toga.colors import rgb
+from toga.colors import rgb  # type: ignore
 from toga.constants import Baseline
 from toga.fonts import SANS_SERIF  # type: ignore
 from toga.style.pack import CENTER, COLUMN, ROW, Pack  # type: ignore
@@ -119,7 +120,8 @@ recommended_config: dict[str, dict[str, Union[str, float, int, bool]]] = {
 
 class Loader:
     """
-    Docstring for Loader: delays loading the libs without triggering pylint, mypy or pylance.
+    Docstring for Loader: delays loading the libs without triggering
+    pylint, mypy or pylance.
     """
 
     def __init__(self, loadable: str):
@@ -136,7 +138,8 @@ class Loader:
 
 async def loader(libraries: list[str], counter: int = 0):
     """
-    Docstring for loader: delays loading the libs without triggering pylint, mypy or pylance.
+    Docstring for loader: delays loading the libs without triggering
+    pylint, mypy or pylance.
 
     :param libraries: Description
     :type libraries: list[str]
@@ -156,7 +159,8 @@ async def loader(libraries: list[str], counter: int = 0):
 
 async def load_libs(libraries: list[str], widget: toga.Widget):
     """
-    Docstring for load_libs: delays loading the libs without triggering pylint, mypy or pylance.
+    Docstring for load_libs: delays loading the libs without triggering
+    pylint, mypy or pylance.
 
     :param libraries: Description
     :type libraries: list[str]
@@ -214,7 +218,8 @@ class canvas_release(OnTouchHandler):
 @contextlib.contextmanager
 def capture():
     """
-    Docstring for capture: decorator to be used to redirect sys terminal outputs into the app's window.
+    Docstring for capture: decorator to be used to redirect
+    sys terminal outputs into the app's window.
     """
     oldout, olderr = sys.stdout, sys.stderr
     try:
@@ -223,8 +228,8 @@ def capture():
         yield out
     finally:
         sys.stdout, sys.stderr = oldout, olderr
-        out[0] = out[0].getvalue()
-        out[1] = out[1].getvalue()
+        out[0] = out[0].getvalue()  # type: ignore
+        out[1] = out[1].getvalue()  # type: ignore
 
 
 # with capture() as out:
@@ -287,13 +292,15 @@ no_preview_list: Callable[..., list[str]] = lambda: list(  # noqa: E731
 )
 
 # pylint: disable-next=line-too-long
-image_dimensions: Callable[..., dict[str, int]] = lambda: {"height": 240, "width": 320}  # noqa: E731
+image_dimensions: Callable[..., dict[str, int]] = lambda: {"height": 240, "width": 320}  # noqa: E731, E501
 
 
 @timing
 def default(instance: toga.Widget) -> None:
     """
-    Docstring for default: A callable to function as a dict constructor with default values in Field instances.
+    Docstring for default:
+    A callable to function as a dict constructor with default
+    values in Field instances.
 
     :param instance: Description
     :type instance: toga.Widget
@@ -306,17 +313,20 @@ def default(instance: toga.Widget) -> None:
 async def train_model(
     instance: toga.Widget,
 ) -> Union[None, AsyncGenerator[StringIO, Any]]:
+    global diffusers
     with capture() as out:
         if "diffusers" not in sys.modules:
             diffusers = importlib.import_module("diffusers")
 
         try:
-            diffusers.__name__ in sys.modules
+            diffusers.__name__ in sys.modules  # type: ignore
         except ValueError:
             diffusers = sys.modules["diffusers"]
 
+        # pylint: disable=invalid-name
         DiffusionPipeline = diffusers.DiffusionPipeline
         DDIMScheduler = diffusers.DDIMScheduler
+        # pylint: enable=invalid-name
 
         # Source: https://huggingface.co/ByteDance/Hyper-SD
 
