@@ -30,13 +30,14 @@ import toga.validators
 from huggingface_hub import hf_hub_download
 from toga.colors import rgb
 from toga.constants import Baseline
-from toga.fonts import SANS_SERIF
-from toga.style.pack import CENTER, COLUMN, ROW, Pack
+from toga.fonts import SANS_SERIF  # type: ignore
+from toga.style.pack import CENTER, COLUMN, ROW, Pack  # type: ignore
 from toga.widgets import textinput
 from toga.widgets.canvas import OnTouchHandler
 from toga.widgets.table import OnSelectHandler
 from toga.window import FilteredWidgetRegistry
 
+# pylint: disable=unused-import
 from .auxiliary.helpers.decorators import timing  # noqa
 from .auxiliary.helpers.handle_files import list_files  # noqa
 from .auxiliary.helpers.handlers import crop_image  # noqa
@@ -51,14 +52,17 @@ from .auxiliary.widgets.opencv_widgets import CVContext  # noqa
 
 from .auxiliary.helpers.models_and_configs import get_default_base_and_lora  # isort: skip
 
-clr.AddReference("System.Drawing")  # noqa
-from System.Drawing import Image as WinImage  # noqa
+# pylint: enable=unused-import
+# pylint: disable-next=no-member,unknown-option-value
+clr.AddReference("System.Drawing")  # noqa # type: ignore # pylint: disable-next=wrong-import-order,wrong-import-position,import-position,unused-import,import-error
+from System.Drawing import Image as WinImage  # type: ignore # noqa
 
+# pylint: disable=invalid-name
 PathLikeT: TypeAlias = str | os.PathLike
 BytesLikeT: TypeAlias = bytes | bytearray | memoryview
 ImageLikeT: TypeAlias = Any
 ImageContentT: TypeAlias = PathLikeT | BytesLikeT | ImageLikeT
-
+# pylint: enable=invalid-name
 # ImageContentT: TypeAlias = Any
 # StyleT: TypeAlias = Any
 
@@ -114,6 +118,10 @@ recommended_config: dict[str, dict[str, Union[str, float, int, bool]]] = {
 
 
 class Loader:
+    """
+    Docstring for Loader: delays loading the libs without triggering pylint, mypy or pylance.
+    """
+
     def __init__(self, loadable: str):
         self.loadable = loadable
 
@@ -127,6 +135,14 @@ class Loader:
 
 
 async def loader(libraries: list[str], counter: int = 0):
+    """
+    Docstring for loader: delays loading the libs without triggering pylint, mypy or pylance.
+
+    :param libraries: Description
+    :type libraries: list[str]
+    :param counter: Description
+    :type counter: int
+    """
     for lib in libraries:
         print(f"{lib=}, {lib in sys.modules=}")
 
@@ -139,6 +155,14 @@ async def loader(libraries: list[str], counter: int = 0):
 
 
 async def load_libs(libraries: list[str], widget: toga.Widget):
+    """
+    Docstring for load_libs: delays loading the libs without triggering pylint, mypy or pylance.
+
+    :param libraries: Description
+    :type libraries: list[str]
+    :param widget: Description
+    :type widget: toga.Widget
+    """
     async for item in loader(libraries):
         widget.value = item
 
@@ -147,7 +171,12 @@ async def load_libs(libraries: list[str], widget: toga.Widget):
         await asyncio.sleep(0.1)
 
 
+# pylint: disable=invalid-name
 class canvas_press(OnTouchHandler):
+    """
+    Docstring for canvas_press: placeholder.
+    """
+
     def __init__(self):
         pass
 
@@ -156,6 +185,10 @@ class canvas_press(OnTouchHandler):
 
 
 class canvas_drag(OnTouchHandler):
+    """
+    Docstring for canvas_drag: placeholder.
+    """
+
     def __init__(self):
         pass
 
@@ -164,6 +197,10 @@ class canvas_drag(OnTouchHandler):
 
 
 class canvas_release(OnTouchHandler):
+    """
+    Docstring for canvas_release: placeholder.
+    """
+
     def __init__(self):
         pass
 
@@ -171,8 +208,14 @@ class canvas_release(OnTouchHandler):
         raise NotImplementedError
 
 
+# pylint: enable=invalid-name
+
+
 @contextlib.contextmanager
 def capture():
+    """
+    Docstring for capture: decorator to be used to redirect sys terminal outputs into the app's window.
+    """
     oldout, olderr = sys.stdout, sys.stderr
     try:
         out = [StringIO(), StringIO()]
@@ -208,6 +251,12 @@ def capture():
 
 @timing
 def assign_container(fun):
+    """
+    Docstring for assign_container: wrapper for functions to make them conform to toga handlers' signatures by filling in containers.
+    Used for pagination of the tables with huggingface's models.
+
+    :param fun: Description
+    """
     # print(f"{fun.__name__=}")
 
     @wraps(fun)
@@ -237,11 +286,18 @@ no_preview_list: Callable[..., list[str]] = lambda: list(  # noqa: E731
     ]
 )
 
+# pylint: disable-next=line-too-long
 image_dimensions: Callable[..., dict[str, int]] = lambda: {"height": 240, "width": 320}  # noqa: E731
 
 
 @timing
 def default(instance: toga.Widget) -> None:
+    """
+    Docstring for default: A callable to function as a dict constructor with default values in Field instances.
+
+    :param instance: Description
+    :type instance: toga.Widget
+    """
     instance.config["base_model"] = ""
     instance.config["lora_model"] = ""
 
