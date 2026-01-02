@@ -286,9 +286,22 @@ def update_crops(widget: toga.Widget | None = None) -> None:
     # img = numpy.asarray(Image.open(source_path))
     # img = img[:, :, ::-1]  # BGR -> RGB colours.
     img = Image.open(source_path).crop((point1[0], point1[1], point2[0], point2[1]))
-    img.save(img_path)
 
-    replacement_image = toga.Image(path=img_path)
+    # subprocess.check_call(["attrib", "-H", img_path])
+
+    if not pathlib.Path(img_path).exists():
+        raise FileExistsError(f"File {img_path=} was not found.")
+
+    if not pathlib.Path(img_path).is_file():
+        raise FileExistsError(f"The path {img_path=} does not lead to a file.")
+
+    replacement_img = toga.Image(src=img)
+    # replacement_view = toga.ImageView(
+    #                     image=replacement_img,
+    #                     id=f"{str(img_path)}",
+    #                     height=image_dimensions().get("height"),
+    #                     width=image_dimensions().get("width"),
+    #                 )
 
     if content:
         if not isinstance(content[0], toga.ImageView):
@@ -297,10 +310,16 @@ def update_crops(widget: toga.Widget | None = None) -> None:
             )
 
         # Leftmost widget in the box. Corresponds to the cropped image.
-        content[0].image = replacement_image
-        content[0].refresh()
 
-    raise NotImplementedError
+        content[0].image = replacement_img
+        crop_and_source_box.refresh()
+        img_path_no_extension = str(img_path).split(".")[0]
+        content[0].image.save(
+            f"{img_path_no_extension}_cropped.png"
+        )  # This method requires .png. There is some issue with overwriting existing .jpg files, too.
+        # content[0].image.save(img_path)
+
+    # raise NotImplementedError
 
 
 class cv_release(OnTouchHandler):
