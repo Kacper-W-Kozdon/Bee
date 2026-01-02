@@ -41,6 +41,7 @@ from toga.window import FilteredWidgetRegistry
 # pylint: disable=unused-import
 from .auxiliary.helpers.decorators import timing  # noqa
 from .auxiliary.helpers.handle_files import list_files  # noqa
+from .auxiliary.helpers.handle_files import Loader, load_libs, loader  # noqa
 from .auxiliary.helpers.handlers import crop_image  # noqa
 from .auxiliary.helpers.handlers import get_next  # noqa
 from .auxiliary.helpers.handlers import get_previous  # noqa
@@ -48,6 +49,7 @@ from .auxiliary.helpers.handlers import update_selection  # noqa
 from .auxiliary.helpers.handlers import confirm_images, select_previews  # noqa
 from .auxiliary.helpers.models_and_configs import get_models  # noqa
 from .auxiliary.helpers.models_and_configs import get_models_page  # noqa
+from .auxiliary.helpers.models_and_configs import recommended_config  # noqa
 from .auxiliary.helpers.models_and_configs import update_config  # noqa
 from .auxiliary.widgets.opencv_widgets import CVContext  # noqa
 
@@ -80,99 +82,6 @@ torch: ModuleType = ModuleType("torch")
 
 default_pipeline: str = "StableDiffusionPipeline"
 recommended_base: str = "sd-legacy/stable-diffusion-v1-5"
-
-recommended_config: dict[str, dict[str, Union[str, float, int, bool]]] = {
-    "base": {
-        "prior_loss_weight": 1.0,
-        "resolution": 512,
-        "no_half_vae": True,
-        "text_encoder_lr": 0.0001,
-    },
-    "small_dataset": {
-        "train_batch_size": 2,
-        "learning_rate": 1e-4,
-        "max_train_steps": 1500,
-        "lr_scheduler": "cosine",
-        "lr_warmup_steps": 150,
-        "network_dim": 32,
-        "network_alpha": 16,
-    },
-    "medium_dataset": {
-        "train_batch_size": 2,
-        "learning_rate": 2e-4,
-        "max_train_steps": 3000,
-        "lr_scheduler": "cosine",
-        "lr_warmup_steps": 300,
-        "network_dim": 32,
-        "network_alpha": 16,
-    },
-    "big_dataset": {
-        "train_batch_size": 2,
-        "learning_rate": 2e-4,
-        "max_train_steps": 4500,
-        "lr_scheduler": "cosine",
-        "lr_warmup_steps": 300,
-        "network_dim": 64,
-        "network_alpha": 32,
-    },
-}
-
-
-class Loader:
-    """
-    Docstring for Loader: delays loading the libs without triggering
-    pylint, mypy or pylance.
-    """
-
-    def __init__(self, loadable: str):
-        self.loadable = loadable
-
-    def __await__(self):
-        lib = self.loadable
-        print(f"Loading {lib}")
-        if lib not in sys.modules:
-            globals().update({lib: importlib.import_module(lib)})
-
-        return (yield None)
-
-
-async def loader(libraries: list[str], counter: int = 0):
-    """
-    Docstring for loader: delays loading the libs without triggering
-    pylint, mypy or pylance.
-
-    :param libraries: Description
-    :type libraries: list[str]
-    :param counter: Description
-    :type counter: int
-    """
-    for lib in libraries:
-        print(f"{lib=}, {lib in sys.modules=}")
-
-        if lib not in sys.modules:
-            await Loader(lib)
-        counter += 1
-
-        print(f"{lib in sys.modules=}")
-        yield counter
-
-
-async def load_libs(libraries: list[str], widget: toga.Widget):
-    """
-    Docstring for load_libs: delays loading the libs without triggering
-    pylint, mypy or pylance.
-
-    :param libraries: Description
-    :type libraries: list[str]
-    :param widget: Description
-    :type widget: toga.Widget
-    """
-    async for item in loader(libraries):
-        widget.value = item
-
-        print(widget.value)
-
-        await asyncio.sleep(0.1)
 
 
 # pylint: disable=invalid-name

@@ -1,9 +1,14 @@
+import asyncio
+import importlib
 import pathlib
+import sys
 from os import listdir
 from os.path import isfile, join
 from typing import Generator  # noqa
 from typing import OrderedDict  # noqa
 from typing import Any, AsyncGenerator, Callable, TypeAlias, Union  # noqa
+
+import toga
 
 
 def list_files(
@@ -58,3 +63,61 @@ def list_files(
             ]
 
     return onlyfiles
+
+
+# pylint: disable-next=too-few-public-methods
+class Loader:
+    """
+    Docstring for Loader: delays loading the libs without triggering
+    pylint, mypy or pylance.
+    """
+
+    def __init__(self, loadable: str):
+        self.loadable = loadable
+
+    def __await__(self):
+        lib = self.loadable
+        print(f"Loading {lib}")
+        if lib not in sys.modules:
+            globals().update({lib: importlib.import_module(lib)})
+
+        return (yield None)
+
+
+async def loader(libraries: list[str], counter: int = 0):
+    """
+    Docstring for loader: delays loading the libs without triggering
+    pylint, mypy or pylance.
+
+    :param libraries: Description
+    :type libraries: list[str]
+    :param counter: Description
+    :type counter: int
+    """
+    for lib in libraries:
+        print(f"{lib=}, {lib in sys.modules=}")
+
+        if lib not in sys.modules:
+            await Loader(lib)
+        counter += 1
+
+        print(f"{lib in sys.modules=}")
+        yield counter
+
+
+async def load_libs(libraries: list[str], widget: toga.Widget):
+    """
+    Docstring for load_libs: delays loading the libs without triggering
+    pylint, mypy or pylance.
+
+    :param libraries: Description
+    :type libraries: list[str]
+    :param widget: Description
+    :type widget: toga.Widget
+    """
+    async for item in loader(libraries):
+        widget.value = item
+
+        print(widget.value)
+
+        await asyncio.sleep(0.1)
