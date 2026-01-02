@@ -8,11 +8,13 @@ from typing import Any, AsyncGenerator, Callable, TypeAlias, Union  # noqa
 
 import clr
 import cv2 as cv
+import numpy  # noqa: F401
 import toga
 import toga.handlers
 import toga.paths
 import toga.sources
 import toga.validators
+from PIL import Image
 from toga.sources.list_source import Row
 from toga.style.pack import COLUMN, ROW, Pack
 from toga.widgets.button import OnPressHandler
@@ -23,8 +25,9 @@ from ..widgets.opencv_widgets import CVView
 from .decorators import timing
 from .models_and_configs import get_models_page
 
-clr.AddReference("System.Drawing")  # noqa
-from System.Drawing import Image as WinImage  # noqa
+# pylint: disable-next=no-member,unknown-option-value
+clr.AddReference("System.Drawing")  # noqa # type: ignore # pylint: disable-next=wrong-import-order,wrong-import-position,import-position,unused-import,import-error
+from System.Drawing import Image as WinImage  # noqa # type: ignore
 
 PathLikeT: TypeAlias = str | os.PathLike
 BytesLikeT: TypeAlias = bytes | bytearray | memoryview
@@ -280,14 +283,19 @@ def update_crops(widget: toga.Widget | None = None) -> None:
     point1 = frame_x * 1 / scaling_factor, frame_y * 1 / scaling_factor
     point2 = point1[0] + width, point1[1] + height  # noqa: F841
 
+    # img = numpy.asarray(Image.open(source_path))
+    # img = img[:, :, ::-1]  # BGR -> RGB colours.
+    img = Image.open(source_path).crop((point1[0], point1[1], point2[0], point2[1]))
+    img.save(img_path)
+
     if content:
         if not isinstance(content[0], toga.ImageView):
             raise TypeError(
                 f"Expected the first element of the box to be a toga.ImageView instance. Got {content[0]=}."
             )
-        content[
-            0
-        ].refresh()  # Leftmost widget in the box. Corresponds to the cropped image.
+
+        # Leftmost widget in the box. Corresponds to the cropped image.
+        content[0].refresh()
 
     raise NotImplementedError
 
