@@ -288,6 +288,8 @@ def update_crops(widget: toga.Widget | None = None) -> None:
     img = Image.open(source_path).crop((point1[0], point1[1], point2[0], point2[1]))
     img.save(img_path)
 
+    replacement_image = toga.Image(path=img_path)
+
     if content:
         if not isinstance(content[0], toga.ImageView):
             raise TypeError(
@@ -295,6 +297,7 @@ def update_crops(widget: toga.Widget | None = None) -> None:
             )
 
         # Leftmost widget in the box. Corresponds to the cropped image.
+        content[0].image = replacement_image
         content[0].refresh()
 
     raise NotImplementedError
