@@ -569,6 +569,10 @@ class BeeBeeware(toga.App):
                         file,
                         pathlib.Path(f"{destination_path}\\{file_index}{extension}"),
                     )
+                    shutil.copymode(
+                        file,
+                        pathlib.Path(f"{destination_path}\\{file_index}{extension}"),
+                    )
                     images_list_.append(
                         pathlib.Path(f"{destination_path}\\{file_index}{extension}")
                     )
