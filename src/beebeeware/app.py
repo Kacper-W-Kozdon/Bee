@@ -498,7 +498,7 @@ class BeeBeeware(toga.App):
                 files: list[Union[str, pathlib.Path, None]],
                 images: list[Union[str, pathlib.Path, None]],
                 destination: Union[str, pathlib.Path, None] = None,
-                format_: str = "Path",
+                format_: str = "str",
                 extensions: Union[list[str], None] = None,
             ):
                 self.format_ = format_
@@ -565,17 +565,16 @@ class BeeBeeware(toga.App):
 
                 for file_index, file in enumerate(files_):
                     extension = [ext for ext in valid_extensions if ext in str(file)][0]
-                    shutil.copyfile(
+                    # toga.Image(path=file).save(f"{destination_path}\\{file_index}{extension}")
+                    shutil.copy(
                         file,
                         pathlib.Path(f"{destination_path}\\{file_index}{extension}"),
                     )
-                    shutil.copymode(
-                        file,
-                        pathlib.Path(f"{destination_path}\\{file_index}{extension}"),
-                    )
-                    images_list_.append(
-                        pathlib.Path(f"{destination_path}\\{file_index}{extension}")
-                    )
+                    # shutil.copymode(
+                    #     file,
+                    #     pathlib.Path(f"{destination_path}\\{file_index}{extension}"),
+                    # )
+                    images_list_.append(f"{destination_path}\\{file_index}{extension}")
 
                 # for path in files_:
                 #     my_image = None
@@ -624,7 +623,7 @@ class BeeBeeware(toga.App):
                 files: list[Union[str, pathlib.Path, None]],
                 images: list[Union[str, pathlib.Path, None]],
                 destination: Union[str, pathlib.Path, None] = None,
-                format_: str = "Path",
+                format_: str = "str",
                 extensions: Union[list[str], None] = None,
             ):
                 self.format_ = format_
@@ -644,13 +643,13 @@ class BeeBeeware(toga.App):
                 path: pathlib.Path = pathlib.Path(widget.value)
                 destination_path: pathlib.Path = self.destination
 
-                if not path.exists():
+                if not pathlib.Path(path).exists():
                     confirmation = toga.ConfirmDialog(
                         "Create a folder",
                         f"Do you wish to create the folder with the {path=}?",
                     )
                     if confirmation:
-                        path.mkdir()
+                        pathlib.Path(path).mkdir()
                     else:
                         return None
 
@@ -693,9 +692,7 @@ class BeeBeeware(toga.App):
                         file,
                         pathlib.Path(f"{destination_path}\\{file_index}{extension}"),
                     )
-                    images_list_.append(
-                        pathlib.Path(f"{destination_path}\\{file_index}{extension}")
-                    )
+                    images_list_.append(f"{destination_path}\\{file_index}{extension}")
 
                 # for path in files_:
                 #     my_image = None
@@ -783,7 +780,7 @@ class BeeBeeware(toga.App):
             view = None
 
             if pathlib.Path(path).exists():
-                my_image = toga.Image(pathlib.Path(path))
+                my_image = toga.Image(path)
                 view = toga.ImageView(
                     my_image,
                     height=image_dimensions().get("height"),

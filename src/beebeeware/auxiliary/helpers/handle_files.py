@@ -12,7 +12,7 @@ import toga
 
 
 def list_files(
-    mypath: Union[str, pathlib.Path], format_: str = "Path", extension: str = ".json"
+    mypath: Union[str, pathlib.Path], format_: str = "str", extension: str = ".json"
 ) -> Union[list[str], list[pathlib.Path], list]:
     # Source - https://stackoverflow.com/a
     # Posted by pycruft, modified by community. See post 'Timeline' for change history

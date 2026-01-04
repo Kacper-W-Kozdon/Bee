@@ -314,9 +314,8 @@ def update_crops(widget: toga.Widget | None = None) -> None:
         content[0].image = replacement_img
         crop_and_source_box.refresh()
         img_path_no_extension = str(img_path).split(".")[0]
-        content[0].image.save(
-            f"{img_path_no_extension}_cropped.png"
-        )  # This method requires .png. There is some issue with overwriting existing .jpg files, too.
+        extension = str(img_path).split(".")[1]
+        content[0].image.save(f"{img_path_no_extension}_cropped.{extension}")
         # content[0].image.save(img_path)
 
     # raise NotImplementedError
@@ -506,10 +505,10 @@ class confirm_images(OnPressHandler):
             )
 
         for image_id, image in enumerate(views_paths):
-            img_path = pathlib.Path(image)
-            if not img_path.exists():
+            img_path = image
+            if not pathlib.Path(img_path).exists():
                 raise LookupError(f"The path invalid. Got {img_path=}")
-            if not img_path.is_file():
+            if not pathlib.Path(img_path).is_file():
                 raise FileNotFoundError(
                     f"The path does not lead to a file. Got {img_path=}"
                 )
@@ -524,9 +523,9 @@ class confirm_images(OnPressHandler):
             scaling_factor = img_height / img.height
 
             source_img_path: pathlib.Path | str = self.source_imgs_list[image_id]
-            if not source_img_path.exists():
+            if not pathlib.Path(source_img_path).exists():
                 raise LookupError(f"The path invalid. Got {source_img_path=}")
-            if not source_img_path.is_file():
+            if not pathlib.Path(source_img_path).is_file():
                 raise FileNotFoundError(
                     f"The path does not lead to a file. Got {source_img_path=}"
                 )
@@ -563,6 +562,11 @@ class confirm_images(OnPressHandler):
                     ),
                 ],
             )
+            cv_release_ = cv_release()
+            cv_release_(
+                img_view.children[2], 0, 0
+            )  # img_view.children[2] points to the CVView from toga.Box above.
+            update_crops(img_view.children[2])
             new_view.add(img_view)
 
         parent_.replace(old_view, new_view)

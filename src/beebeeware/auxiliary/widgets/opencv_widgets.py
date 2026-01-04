@@ -152,10 +152,10 @@ class CVView(toga.ImageView, toga.Canvas):
 
         self.scaling_factor = float(scaling_factor)
         self.frame_x: int | None = (
-            None  # Raw values before scaling back to the original size of the image.
+            0  # Raw values before scaling back to the original size of the image.
         )
         self.frame_y: int | None = (
-            None  # Raw values before scaling back to the original size of the image.
+            0  # Raw values before scaling back to the original size of the image.
         )
 
     def _create(self) -> Any:
