@@ -19,6 +19,7 @@ from toga.sources.list_source import Row
 from toga.style.pack import COLUMN, ROW, Pack
 from toga.widgets.button import OnPressHandler
 from toga.widgets.canvas import OnTouchHandler
+from toga.widgets.multilinetextinput import OnChangeHandler
 from toga.widgets.table import OnSelectHandler
 
 from ..widgets.opencv_widgets import CVView
@@ -460,6 +461,13 @@ class crop_image(OnPressHandler):
         cropping_window.show()
 
 
+class save_captions(OnChangeHandler):
+    def __init__(self): ...
+
+    def __call__(self, widget, **kwargs):
+        raise NotImplementedError
+
+
 class confirm_images(OnPressHandler):
     def __init__(
         self,
@@ -562,12 +570,25 @@ class confirm_images(OnPressHandler):
                     ),
                 ],
             )
+
+            caption_box = toga.MultilineTextInput(
+                id=f"{str(img_path)}_caption",
+                placeholder="Caption the image or leave empty to auto-generate captions.",
+                on_change=save_captions,
+            )
+
+            captioned_img_view = toga.Box(
+                id=f"{str(img_path)}_captioned",
+                children=[img_view, caption_box],
+                style=Pack(direction=COLUMN),
+            )
+
             cv_release_ = cv_release()
             cv_release_(
                 img_view.children[2], 0, 0
             )  # img_view.children[2] points to the CVView from toga.Box above.
             update_crops(img_view.children[2])
-            new_view.add(img_view)
+            new_view.add(captioned_img_view)
 
         parent_.replace(old_view, new_view)
 

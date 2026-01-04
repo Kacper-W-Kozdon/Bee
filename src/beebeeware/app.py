@@ -271,6 +271,7 @@ class Config:
     base_model: Union[str, None] = ""
     lora_model: Union[str, None] = ""
     pipeline: Union[str, None] = default_pipeline
+    keyword: Union[str, None] = ""
 
 
 main_config = Config()
