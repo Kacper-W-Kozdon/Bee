@@ -549,13 +549,13 @@ class confirm_images(OnPressHandler):
                         on_press=crop_press,
                     ),
                     CVView(
-                        image=img,
+                        image=img,  # Locks the copied images open, thus cannot be overwritten.
                         id=f"{str(img_path)}_image",
                         height=image_dimensions().get("height"),
                         width=int(scaling_factor * img.width),
                         on_press=cv_press(),
                         on_drag=cv_drag(),
-                        on_release=cv_release(),
+                        on_release=cv_release(),  # Has to save as a new file, because the img is in use by CVView.
                         image_path=img_path,
                         source_path=source_img_path,
                         scaling_factor=scaling_factor,
