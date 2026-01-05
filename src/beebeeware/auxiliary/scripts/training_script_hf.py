@@ -27,13 +27,19 @@ import math
 import os
 import random
 from pathlib import Path
+from typing import AsyncGenerator, Any
+import sys
+import importlib
+from types import ModuleType
+from typing import Union
+from huggingface_hub import hf_hub_download
 
 import datasets  # noqa
 import diffusers
 import numpy as np
 import torch
 import torch.nn.functional as F
-import torch.utils.checkpoint
+import torch.utils.checkpoint  # noqa
 import transformers  # noqa
 from accelerate import Accelerator  # noqa
 from accelerate.logging import get_logger  # noqa
@@ -51,11 +57,57 @@ from packaging import version
 from torchvision import transforms  # noqa
 from tqdm.auto import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
+from ..helpers.managers import capture
 
 # Will error if the minimal version of diffusers is not installed. Remove at your own risks.
 check_min_version("0.14.0.dev0")
 
 logger = get_logger(__name__, log_level="INFO")
+
+toga: ModuleType = ...
+toga.Widget = type("toga.Widget", [], {})
+
+
+async def train_model(
+    instance: toga.Widget,
+) -> Union[None, AsyncGenerator[Any]]:
+    raise NotImplementedError
+    global diffusers
+    with capture() as out:
+        if "diffusers" not in sys.modules:
+            diffusers = importlib.import_module("diffusers")
+
+        try:
+            diffusers.__name__ in sys.modules  # type: ignore
+        except ValueError:
+            diffusers = sys.modules["diffusers"]
+
+        # pylint: disable=invalid-name
+        DiffusionPipeline = diffusers.DiffusionPipeline
+        DDIMScheduler = diffusers.DDIMScheduler
+        # pylint: enable=invalid-name
+
+        # Source: https://huggingface.co/ByteDance/Hyper-SD
+
+        base_model_id = "runwayml/stable-diffusion-v1-5"
+        repo_name = "ByteDance/Hyper-SD"
+        # Take 2-steps lora as an example
+        ckpt_name = "Hyper-SD15-2steps-lora.safetensors"
+        # Load model.
+        pipe = DiffusionPipeline.from_pretrained(
+            base_model_id, torch_dtype=torch.float16, variant="fp16"
+        ).to("cuda")
+        pipe.load_lora_weights(hf_hub_download(repo_name, ckpt_name))
+        pipe.fuse_lora()
+        # Ensure ddim scheduler timestep spacing set as trailing !!!
+        pipe.scheduler = DDIMScheduler.from_config(
+            pipe.scheduler.config, timestep_spacing="trailing"
+        )
+        prompt = "a photo of a cat"
+        image = pipe(prompt=prompt, num_inference_steps=2, guidance_scale=0).images[0]  # noqa: F841
+
+    yield out[0]
+    raise NotImplementedError
 
 
 def save_model_card(

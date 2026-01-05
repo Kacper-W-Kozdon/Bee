@@ -4,10 +4,7 @@ An app for Bee.
 """
 
 import asyncio
-import contextlib
 import copy
-import importlib
-import importlib.util
 import json
 import os
 import pathlib
@@ -16,7 +13,6 @@ import sys
 import typing
 from dataclasses import dataclass, field
 from functools import partial, wraps
-from io import StringIO
 from types import ModuleType  # pylint: disable-next=unused-import
 from typing import Generator  # noqa
 from typing import OrderedDict  # noqa
@@ -28,7 +24,6 @@ import toga.handlers
 import toga.paths
 import toga.sources
 import toga.validators
-from huggingface_hub import hf_hub_download
 from toga.colors import rgb  # type: ignore
 from toga.constants import Baseline
 from toga.fonts import SANS_SERIF  # type: ignore
@@ -49,9 +44,11 @@ from .auxiliary.helpers.handlers import get_previous  # noqa
 from .auxiliary.helpers.handlers import update_selection  # noqa
 from .auxiliary.helpers.handlers import use_recommended  # noqa
 from .auxiliary.helpers.handlers import confirm_images, select_previews  # noqa
+from .auxiliary.helpers.managers import capture  # noqa
 from .auxiliary.helpers.models_and_configs import get_models  # noqa
 from .auxiliary.helpers.models_and_configs import get_models_page  # noqa
 from .auxiliary.helpers.models_and_configs import recommended_config  # noqa
+from .auxiliary.scripts.training_script_hf import train_model  # noqa
 from .auxiliary.widgets.opencv_widgets import CVContext  # noqa
 
 from .auxiliary.helpers.models_and_configs import update_config_from_sig  # noqa # isort: skip
@@ -127,23 +124,6 @@ class canvas_release(OnTouchHandler):
 # pylint: enable=invalid-name
 
 
-@contextlib.contextmanager
-def capture():
-    """
-    Docstring for capture: decorator to be used to redirect
-    sys terminal outputs into the app's window.
-    """
-    oldout, olderr = sys.stdout, sys.stderr
-    try:
-        out = [StringIO(), StringIO()]
-        sys.stdout, sys.stderr = out
-        yield out
-    finally:
-        sys.stdout, sys.stderr = oldout, olderr
-        out[0] = out[0].getvalue()  # type: ignore
-        out[1] = out[1].getvalue()  # type: ignore
-
-
 # with capture() as out:
 #     pass
 
@@ -205,48 +185,6 @@ no_preview_list: Callable[..., list[str]] = lambda: list(  # noqa: E731
 
 # pylint: disable-next=line-too-long
 image_dimensions: Callable[..., dict[str, int]] = lambda: {"height": 240, "width": 320}  # noqa: E731, E501
-
-
-@timing
-async def train_model(
-    instance: toga.Widget,
-) -> Union[None, AsyncGenerator[StringIO, Any]]:
-    global diffusers
-    with capture() as out:
-        if "diffusers" not in sys.modules:
-            diffusers = importlib.import_module("diffusers")
-
-        try:
-            diffusers.__name__ in sys.modules  # type: ignore
-        except ValueError:
-            diffusers = sys.modules["diffusers"]
-
-        # pylint: disable=invalid-name
-        DiffusionPipeline = diffusers.DiffusionPipeline
-        DDIMScheduler = diffusers.DDIMScheduler
-        # pylint: enable=invalid-name
-
-        # Source: https://huggingface.co/ByteDance/Hyper-SD
-
-        base_model_id = "runwayml/stable-diffusion-v1-5"
-        repo_name = "ByteDance/Hyper-SD"
-        # Take 2-steps lora as an example
-        ckpt_name = "Hyper-SD15-2steps-lora.safetensors"
-        # Load model.
-        pipe = DiffusionPipeline.from_pretrained(
-            base_model_id, torch_dtype=torch.float16, variant="fp16"
-        ).to("cuda")
-        pipe.load_lora_weights(hf_hub_download(repo_name, ckpt_name))
-        pipe.fuse_lora()
-        # Ensure ddim scheduler timestep spacing set as trailing !!!
-        pipe.scheduler = DDIMScheduler.from_config(
-            pipe.scheduler.config, timestep_spacing="trailing"
-        )
-        prompt = "a photo of a cat"
-        image = pipe(prompt=prompt, num_inference_steps=2, guidance_scale=0).images[0]  # noqa: F841
-
-    yield out[0]
-    raise NotImplementedError
 
 
 @dataclass
