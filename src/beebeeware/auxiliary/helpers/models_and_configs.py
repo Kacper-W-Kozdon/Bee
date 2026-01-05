@@ -76,7 +76,22 @@ recommended_config: dict[str, dict[str, Union[str, float, int, bool]]] = {
 
 
 @timing
-def update_config(
+def update_config(config: Union[dict, None] = None):
+    if (not config) or (not isinstance(config, (dict, OrderedDict))):
+        raise TypeError(
+            f"The config was expected to be a non-empty dict or OrderedDict. Got {config=}."
+        )
+
+    for config_name, config_value in config.items():
+        if type(config_value) not in [None, int, float, str]:
+            continue
+        config[config_name] = [[type(config_value)], config_value]
+
+    raise NotImplementedError
+
+
+@timing
+def update_config_from_sig(
     instance: Union[toga.Widget, toga.Widget, None] = None,
     model_id: Union[str, None] = None,
     base_or_lora: str = "base",
@@ -117,6 +132,7 @@ def update_config(
         pipe_config = {}  # noqa: F841
     # print(config)
     sig = inspect.signature(pipe.__call__)
+    print(f"Pipe signature {sig=}.")
     params = sig.parameters
 
     # params_dict = {param_name: (getattr(param_data.annotation, "get_args", None), param_data.default) for param_name, param_data in params.items()}
@@ -159,6 +175,9 @@ def update_config(
         params_dict[param_name] = (annotations_out, default)
 
     ret = OrderedDict(params_dict)
+
+    print(f"Updating model params. {ret=}.")
+    print(f"{pipe_config=}")
 
     if instance:
         instance.config.update(ret)

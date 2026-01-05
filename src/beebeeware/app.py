@@ -43,15 +43,18 @@ from .auxiliary.helpers.decorators import timing  # noqa
 from .auxiliary.helpers.handle_files import list_files  # noqa
 from .auxiliary.helpers.handle_files import Loader, load_libs, loader  # noqa
 from .auxiliary.helpers.handlers import crop_image  # noqa
+from .auxiliary.helpers.handlers import default  # noqa
 from .auxiliary.helpers.handlers import get_next  # noqa
 from .auxiliary.helpers.handlers import get_previous  # noqa
 from .auxiliary.helpers.handlers import update_selection  # noqa
+from .auxiliary.helpers.handlers import use_recommended  # noqa
 from .auxiliary.helpers.handlers import confirm_images, select_previews  # noqa
 from .auxiliary.helpers.models_and_configs import get_models  # noqa
 from .auxiliary.helpers.models_and_configs import get_models_page  # noqa
 from .auxiliary.helpers.models_and_configs import recommended_config  # noqa
-from .auxiliary.helpers.models_and_configs import update_config  # noqa
 from .auxiliary.widgets.opencv_widgets import CVContext  # noqa
+
+from .auxiliary.helpers.models_and_configs import update_config_from_sig  # noqa # isort: skip
 
 from .auxiliary.helpers.models_and_configs import get_default_base_and_lora  # isort: skip
 
@@ -205,20 +208,6 @@ image_dimensions: Callable[..., dict[str, int]] = lambda: {"height": 240, "width
 
 
 @timing
-def default(instance: toga.Widget) -> None:
-    """
-    Docstring for default:
-    A callable to function as a dict constructor with default
-    values in Field instances.
-
-    :param instance: Description
-    :type instance: toga.Widget
-    """
-    instance.config["base_model"] = ""
-    instance.config["lora_model"] = ""
-
-
-@timing
 async def train_model(
     instance: toga.Widget,
 ) -> Union[None, AsyncGenerator[StringIO, Any]]:
@@ -341,6 +330,7 @@ class BeeBeeware(toga.App):
                 "Train": train_model,
                 "confirm_images": confirm_images,
                 "Crop_image": crop_image,
+                "Use Recommended": use_recommended,
             }
         )
 
@@ -860,7 +850,7 @@ class BeeBeeware(toga.App):
         # lora_model = self.config.get("lora_model")
 
         model_configs: OrderedDict[str, Union[str, int, float, list, dict, None]] = (
-            update_config(instance=self, model_id=base_model)
+            update_config_from_sig(instance=self, model_id=base_model)
         )
         config.update(model_configs)  # type: ignore
 
@@ -873,6 +863,28 @@ class BeeBeeware(toga.App):
         )
         default_button = toga.Button(
             "Use default", on_press=self.aux_buttons["Default"]
+        )
+
+        recommended_label = toga.Label("Use recommended configs: ")
+        recommended_small_button = toga.Button(
+            id="small_dataset_button", on_press=use_recommended
+        )
+        recommended_medium_button = toga.Button(
+            id="medium_dataset_button", on_press=use_recommended
+        )
+        recommended_big_button = toga.Button(
+            id="big_dataset_button", on_press=use_recommended
+        )
+
+        recommended_box = toga.Box(
+            id="recommended_box",
+            style=Pack(direction=ROW),
+            children=[
+                recommended_label,
+                recommended_small_button,
+                recommended_medium_button,
+                recommended_big_button,
+            ],
         )
 
         for config_name, config_input in config.items():
@@ -922,6 +934,7 @@ class BeeBeeware(toga.App):
         save_load_box.add(save_button)
 
         config_scroll.add(save_load_box)
+        config_scroll.add(recommended_box)
 
         self.previews_container.content = config_scroll
 
@@ -934,7 +947,7 @@ class BeeBeeware(toga.App):
             return None
 
         summary_preview = toga.Box(id="summary_preview", style=Pack(direction=COLUMN))
-        update_config(self)
+        update_config_from_sig(self)
         for config_label, config_value_ in self.config.items():
             if config_label == "no_preview":
                 continue

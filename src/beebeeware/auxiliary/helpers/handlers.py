@@ -51,10 +51,36 @@ torch: ModuleType = ModuleType("torch")
 
 default_pipeline: str = "StableDiffusionPipeline"
 recommended_base: str = "sd-legacy/stable-diffusion-v1-5"
+recommended_lora: str = ""
 
 image_dimensions: Callable[..., dict[str, int]] = lambda: {"height": 240, "width": 320}  # noqa: E731
 
 BeeBeeware: type | None = None
+
+
+@timing
+def default(instance: toga.Widget) -> None:
+    """
+    Docstring for default:
+    A callable to function as a dict constructor with default
+    values in Field instances.
+
+    :param instance: Description
+    :type instance: toga.Widget
+    """
+    App = instance.app
+
+    if not isinstance(App, toga.App):
+        raise TypeError(f"Expected an instance of a toga.App. Got {App=}.")
+
+    if not getattr(App, "config"):
+        raise KeyError("The app's instance did not initialize the config attribute.")
+
+    getattr(App, "config")["base_model"] = recommended_base
+    getattr(App, "config")["lora_model"] = recommended_lora
+
+    raise NotImplementedError
+
 
 recommended_config: dict[str, dict[str, Union[str, float, int, bool]]] = {
     "base": {
@@ -91,6 +117,33 @@ recommended_config: dict[str, dict[str, Union[str, float, int, bool]]] = {
         "network_alpha": 32,
     },
 }
+
+
+@timing
+def use_recommended(widget: toga.Widget, **kwargs):
+    if not isinstance(widget, toga.Button):
+        raise TypeError(
+            f"The handler was not called by a toga.Button. The handler was called by {widget=}."
+        )
+
+    config = copy.copy(recommended_config["base"])
+
+    match widget.id:
+        case "small_dataset_button":
+            config.update(recommended_config["small_dataset"])
+        case "medium_dataset_button":
+            config.update(recommended_config["medium_dataset"])
+        case "big_dataset_button":
+            config.update(recommended_config["big_dataset"])
+        case _:
+            raise KeyError(
+                f"The button's id is expected to be one of: 'small_dataset_button', 'medium_dataset_button', 'big_dataset_button'. Got {widget.id=}."
+            )
+
+    print(f"Using recommended {config=}.")
+    getattr(widget.app, "config").update(config)
+    print(f"Updated config: {getattr(widget.app, "config")=}.")
+    # raise NotImplementedError
 
 
 class select_previews(OnSelectHandler):
