@@ -850,8 +850,8 @@ class BeeBeeware(toga.App):
 
         config = OrderedDict(
             {
-                config_name: toga.NumberInput(min=0, max=10, step=0.1, value=1)
-                for config_name, _ in self.config.items()
+                config_name: [type(config_default)]
+                for config_name, config_default in self.config.items()
                 if config_name not in self.config["no_preview"]
             }
         )
