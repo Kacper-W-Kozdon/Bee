@@ -32,6 +32,8 @@ requires = [
     "accelerate",
     "datasets",
     "torchvision",
+    "peft",
+    "bitsandbytes",
 ]
 test_requires = [
     "pytest",

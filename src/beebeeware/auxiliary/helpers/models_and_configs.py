@@ -110,7 +110,7 @@ def update_config_from_sig(
     #     diffusers = sys.modules["diffusers"]
 
     AutoPipelineForText2Image = diffusers.AutoPipelineForText2Image
-    pipe = AutoPipelineForText2Image
+    pipe = AutoPipelineForText2Image.from_pretrained(model_id)
 
     # dir_dict_config = [entry for entry in dir(pipe) if "config" in entry]
     # print(dir_dict_config)
