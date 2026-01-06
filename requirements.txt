@@ -1,10 +1,12 @@
 accelerate
+bitsandbytes
 briefcase
 cv2
 datasets
 diffusers
 huggingface_hub
 lazy_loader
+peft
 Pillow
 pythonnet
 toga

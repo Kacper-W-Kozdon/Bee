@@ -82,6 +82,7 @@ torch: ModuleType = ModuleType("torch")
 
 default_pipeline: str = "StableDiffusionPipeline"
 recommended_base: str = "sd-legacy/stable-diffusion-v1-5"
+recommended_lora: str = "latent-consistency/lcm-lora-sdv1-5"
 
 
 # pylint: disable=invalid-name
