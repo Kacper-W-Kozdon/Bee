@@ -8,6 +8,8 @@ from typing import Any, AsyncGenerator, Callable, TypeAlias, Union  # noqa
 
 import clr
 
+from ..helpers.managers import capture
+
 clr.AddReference("System.Drawing")  # noqa
 from System.Drawing import Image as WinImage  # noqa
 
@@ -81,3 +83,10 @@ def timing(fun) -> Callable:
         return ret
 
     return outer
+
+
+def capture_decorator():
+    with capture() as out:  # noqa: F841
+        pass
+
+    raise NotImplementedError
