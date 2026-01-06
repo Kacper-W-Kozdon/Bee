@@ -30,7 +30,6 @@ from pathlib import Path
 from typing import AsyncGenerator, Any
 import sys
 import importlib
-from types import ModuleType
 from typing import Union
 from huggingface_hub import hf_hub_download
 
@@ -65,14 +64,11 @@ check_min_version("0.14.0.dev0")
 
 logger = get_logger(__name__, log_level="INFO")
 
-toga: ModuleType = type("toga", "module", {"Widget": None})
-
-setattr(toga, "Widget", type("toga.Widget", [], {}))
-toga.Widget = type("toga.Widget", [], {})
+Widget = type("toga.Widget", (), {})
 
 
 async def train_model(
-    instance: toga.Widget,
+    instance: Widget,
 ) -> Union[None, AsyncGenerator[Any]]:
     raise NotImplementedError
     global diffusers
