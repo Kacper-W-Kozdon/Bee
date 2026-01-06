@@ -85,8 +85,14 @@ def timing(fun) -> Callable:
     return outer
 
 
-def capture_decorator():
-    with capture() as out:  # noqa: F841
-        pass
+def capture_decorator(fun) -> Callable:
+    @wraps(fun)
+    def outer(*args, **kwargs):
+        with capture() as out:  # noqa: F841
+            fun(*args, **kwargs)
+            pass
+
+        yield out[0]
 
     raise NotImplementedError
+    return outer
