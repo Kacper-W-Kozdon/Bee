@@ -65,7 +65,9 @@ check_min_version("0.14.0.dev0")
 
 logger = get_logger(__name__, log_level="INFO")
 
-toga: ModuleType = ...
+toga: ModuleType = type("toga", "module", {"Widget": None})
+
+setattr(toga, "Widget", type("toga.Widget", [], {}))
 toga.Widget = type("toga.Widget", [], {})
 
 
