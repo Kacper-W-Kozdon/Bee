@@ -47,6 +47,7 @@ from accelerate.utils import ProjectConfiguration, set_seed  # noqa
 from datasets import load_dataset  # noqa
 from diffusers import UNet2DConditionModel  # noqa
 from diffusers import AutoencoderKL, DDPMScheduler, DiffusionPipeline  # noqa
+from diffusers import AutoPipelineForText2Image  # noqa
 from diffusers.loaders import AttnProcsLayers
 from diffusers.models.attention_processor import LoRAAttnProcessor
 from diffusers.optimization import get_scheduler
