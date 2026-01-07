@@ -88,32 +88,33 @@ def timing(fun) -> Callable:
 
 def capture_decorator(fun) -> Callable:
     @wraps(fun)
-    def outer(*args, **kwargs):
+    async def outer(*args, **kwargs):
         widget_out = args[0]
         widget = args[1]
         if not isinstance(widget_out, toga.Widget):
             raise TypeError(f"Expected a toga.Widget instance. Got {widget_out=}.")
 
-        def inner(*args, **kwargs):
-            return fun(args, kwargs)
+        async def inner(*args, **kwargs):
+            await fun(args, kwargs)
 
         if not isinstance(widget, toga.Widget):
-            return inner(args, kwargs)
+            await inner(args, kwargs)
 
-        def inner_captured(*args, **kwargs):
+        print(f"capture_decorator(): {widget_out.id=}.")
+
+        async def inner_captured(*args, **kwargs):
             print(f"inner_captured(): {args=}.")
             with capture() as out:  # noqa: F841
                 widget, *_ = args
                 args = tuple(args[1:])
-                print(f"capture_decorator(): {widget.id=}.")
                 ret = fun(*args, **kwargs)
 
-            widget.value = " ".join([str(line) for line in out])
-            print(f"Captured output: {widget.value=}.")
-            widget.refresh()
+                widget.value = out[0]
+                print(f"Captured output: {widget.value=}.")
+                widget.refresh()
 
-            return ret
+            await ret
 
-        return inner_captured(*args, **kwargs)
+        await inner_captured(*args, **kwargs)
 
     return outer
