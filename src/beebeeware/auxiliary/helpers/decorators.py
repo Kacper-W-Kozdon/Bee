@@ -110,6 +110,7 @@ def capture_decorator(fun) -> Callable:
 
             for prnt in out:
                 widget.value = prnt
+                print(f"Captured output: {widget.value, prnt=}.")
                 widget.refresh()
 
             return ret

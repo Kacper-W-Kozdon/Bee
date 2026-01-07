@@ -48,7 +48,6 @@ from .auxiliary.helpers.managers import capture  # noqa
 from .auxiliary.helpers.models_and_configs import get_models  # noqa
 from .auxiliary.helpers.models_and_configs import get_models_page  # noqa
 from .auxiliary.helpers.models_and_configs import recommended_config  # noqa
-from .auxiliary.scripts.training_script_hf import train_model  # noqa
 from .auxiliary.widgets.opencv_widgets import CVContext  # noqa
 
 from .auxiliary.helpers.models_and_configs import update_config_from_sig  # noqa # isort: skip
@@ -56,6 +55,8 @@ from .auxiliary.helpers.models_and_configs import update_config_from_sig  # noqa
 from .auxiliary.helpers.models_and_configs import get_default_base_and_lora  # isort: skip
 
 # pylint: enable=unused-import
+# from .auxiliary.scripts.training_script_hf import train_model  # noqa
+
 # pylint: disable-next=no-member,unknown-option-value
 clr.AddReference("System.Drawing")  # noqa # type: ignore # pylint: disable-next=wrong-import-order,wrong-import-position,import-position,unused-import,import-error
 from System.Drawing import Image as WinImage  # type: ignore # noqa
