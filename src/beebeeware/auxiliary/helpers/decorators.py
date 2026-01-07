@@ -114,4 +114,6 @@ def capture_decorator(fun) -> Callable:
 
             return ret
 
+        return inner_captured(*args, **kwargs)
+
     return outer
