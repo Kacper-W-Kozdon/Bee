@@ -237,6 +237,7 @@ class BeeBeeware(toga.App):
         )
 
         self.main_window = toga.MainWindow(title=self.formal_name)
+        text_box_capture = toga.MultilineTextInput(id="capture_out", readonly=True)
 
         loading_progress = toga.ProgressBar(
             "loading_progress",
@@ -246,7 +247,8 @@ class BeeBeeware(toga.App):
 
         loading_progress.start()
         asyncio.ensure_future(
-            load_libs(startup_libs, loading_progress), loop=asyncio.get_running_loop()
+            load_libs(text_box_capture, loading_progress, startup_libs),
+            loop=asyncio.get_running_loop(),
         )
         loading_progress.stop()
 

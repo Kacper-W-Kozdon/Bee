@@ -10,6 +10,8 @@ from typing import Any, AsyncGenerator, Callable, TypeAlias, Union  # noqa
 
 import toga
 
+from ..helpers.decorators import capture_decorator
+
 
 def list_files(
     mypath: Union[str, pathlib.Path], format_: str = "str", extension: str = ".json"
@@ -105,7 +107,8 @@ async def loader(libraries: list[str], counter: int = 0):
         yield counter
 
 
-async def load_libs(libraries: list[str], widget: toga.Widget):
+@capture_decorator
+async def load_libs(widget: toga.Widget, libraries: list[str]):
     """
     Docstring for load_libs: delays loading the libs without triggering
     pylint, mypy or pylance.

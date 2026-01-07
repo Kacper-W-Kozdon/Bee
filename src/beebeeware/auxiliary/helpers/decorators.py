@@ -7,6 +7,7 @@ from typing import OrderedDict  # noqa
 from typing import Any, AsyncGenerator, Callable, TypeAlias, Union  # noqa
 
 import clr
+import toga
 
 from ..helpers.managers import capture
 
@@ -88,11 +89,28 @@ def timing(fun) -> Callable:
 def capture_decorator(fun) -> Callable:
     @wraps(fun)
     def outer(*args, **kwargs):
-        with capture() as out:  # noqa: F841
-            fun(*args, **kwargs)
-            pass
+        widget_out = args[0]
+        widget = args[1]
+        if not isinstance(widget_out, toga.Widget):
+            raise TypeError(f"Expected a toga.Widget instance. Got {widget_out=}.")
 
-        yield out[0]
+        def inner(*args, **kwargs):
+            fun(args, kwargs)
 
-    raise NotImplementedError
+        if not isinstance(widget, toga.Widget):
+            return inner(args, kwargs)
+
+        def inner_captured(*args, **kwargs):
+            with capture() as out:  # noqa: F841
+                widget = args[0]
+                args = tuple(args[1:])
+                print(f"capture_decorator(): {widget.id=}.")
+                fun(*args, **kwargs)
+
+                yield out[0]
+
+        for prnt in inner_captured(args, kwargs):
+            widget.value = prnt
+            widget.refresh()
+
     return outer
