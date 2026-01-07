@@ -108,10 +108,9 @@ def capture_decorator(fun) -> Callable:
                 print(f"capture_decorator(): {widget.id=}.")
                 ret = fun(*args, **kwargs)
 
-            for prnt in out:
-                widget.value = prnt
-                print(f"Captured output: {widget.value, prnt=}.")
-                widget.refresh()
+            widget.value = " ".join([str(line) for line in out])
+            print(f"Captured output: {widget.value=}.")
+            widget.refresh()
 
             return ret
 
