@@ -188,6 +188,10 @@ no_preview_list: Callable[..., list[str]] = lambda: list(  # noqa: E731
 image_dimensions: Callable[..., dict[str, int]] = lambda: {"height": 240, "width": 320}  # noqa: E731, E501
 
 
+def train_model_placeholder(widget, **kwargs):
+    pass
+
+
 @dataclass
 class Config:
     no_preview: list[str] = field(default_factory=no_preview_list)
@@ -268,7 +272,7 @@ class BeeBeeware(toga.App):
                 "Next": self.next,
                 "Previous": self.previous,
                 "Default": default,
-                "Train": train_model,
+                "Train": train_model_placeholder,
                 "confirm_images": confirm_images,
                 "Crop_image": crop_image,
                 "Use Recommended": use_recommended,
