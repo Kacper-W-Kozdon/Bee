@@ -69,6 +69,7 @@ Widget = type("toga.Widget", (), {})
 
 async def train_model(
     instance: Widget,
+    **kwargs: dict,
 ) -> Union[None, AsyncGenerator[Any]]:
     raise NotImplementedError
     global diffusers
