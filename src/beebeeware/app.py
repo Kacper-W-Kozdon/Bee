@@ -293,6 +293,7 @@ class BeeBeeware(toga.App):
             id="previews_container", horizontal=False, style=Pack(direction=COLUMN)
         )
         previews.add(loading_progress)
+        previews.add(text_box_capture)
         self.previews_container.content = previews
 
         menu_previews_split.content = [
