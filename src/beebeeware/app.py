@@ -221,8 +221,8 @@ class BeeBeeware(toga.App):
             for config_name, config_value in main_config.__dict__.items()
         }
     )
-    files_list = []
-    images_list = []
+    files_list: list[str, pathlib.Path] = []
+    images_list: list[str, pathlib.Path] = []
 
     def startup(self):
         """Construct and show the Toga application.
