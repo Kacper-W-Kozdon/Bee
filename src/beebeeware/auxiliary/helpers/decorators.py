@@ -95,22 +95,23 @@ def capture_decorator(fun) -> Callable:
             raise TypeError(f"Expected a toga.Widget instance. Got {widget_out=}.")
 
         def inner(*args, **kwargs):
-            fun(args, kwargs)
+            return fun(args, kwargs)
 
         if not isinstance(widget, toga.Widget):
             return inner(args, kwargs)
 
         def inner_captured(*args, **kwargs):
+            print(f"inner_captured(): {args=}.")
             with capture() as out:  # noqa: F841
-                widget = args[0]
+                widget, *_ = args
                 args = tuple(args[1:])
                 print(f"capture_decorator(): {widget.id=}.")
-                fun(*args, **kwargs)
+                ret = fun(*args, **kwargs)
 
-                yield out[0]
+            for prnt in out:
+                widget.value = prnt
+                widget.refresh()
 
-        for prnt in inner_captured(args, kwargs):
-            widget.value = prnt
-            widget.refresh()
+            return ret
 
     return outer
