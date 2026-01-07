@@ -1,3 +1,5 @@
+import asyncio
+import inspect
 import os
 import time
 from functools import wraps
@@ -87,34 +89,44 @@ def timing(fun) -> Callable:
 
 
 def capture_decorator(fun) -> Callable:
-    @wraps(fun)
-    async def outer(*args, **kwargs):
-        widget_out = args[0]
-        widget = args[1]
-        if not isinstance(widget_out, toga.Widget):
-            raise TypeError(f"Expected a toga.Widget instance. Got {widget_out=}.")
+    if inspect.isasyncgenfunction(fun):
+        loop = asyncio.get_event_loop()
 
-        async def inner(*args, **kwargs):
-            await fun(args, kwargs)
+        print(f"Event {loop=}.")
 
-        if not isinstance(widget, toga.Widget):
-            await inner(args, kwargs)
+        @wraps(fun)
+        async def outer(*args, **kwargs):
+            widget_out = args[0]
+            widget = args[1]
+            if not isinstance(widget_out, toga.Widget):
+                raise TypeError(f"Expected a toga.Widget instance. Got {widget_out=}.")
 
-        print(f"capture_decorator(): {widget_out.id=}.")
+            async def inner(*args, **kwargs):
+                task = asyncio.create_task(fun(*args, **kwargs))
+                await task
 
-        async def inner_captured(*args, **kwargs):
-            print(f"inner_captured(): {args=}.")
-            with capture() as out:  # noqa: F841
-                widget, *_ = args
-                args = tuple(args[1:])
-                ret = fun(*args, **kwargs)
+            if not isinstance(widget, toga.Widget):
+                await inner(args, kwargs)
+
+            print(f"capture_decorator(): {widget_out.id=}.")
+
+            async def inner_captured(*args, **kwargs):
+                print(f"inner_captured(): {args=}.")
+                with capture() as out:  # noqa: F841
+                    widget, *_ = args
+                    args = tuple(args[1:])
+                    task = asyncio.create_task(fun(*args, **kwargs))
+                    await task
 
                 widget.value = out[0]
                 print(f"Captured output: {widget.value=}.")
                 widget.refresh()
 
-            await ret
+            await inner_captured(*args, **kwargs)
 
-        await inner_captured(*args, **kwargs)
+        return outer
 
-    return outer
+    else:
+        raise TypeError("Expected an async function.")
+
+    return None
