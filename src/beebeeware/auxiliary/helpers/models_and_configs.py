@@ -4,6 +4,7 @@ import inspect
 import os
 import sys
 import typing
+from dataclasses import dataclass
 from types import ModuleType
 from typing import Generator  # noqa
 from typing import OrderedDict  # noqa
@@ -73,6 +74,68 @@ recommended_config: dict[str, dict[str, Union[str, float, int, bool]]] = {
         "network_dim": 64,
         "network_alpha": 32,
     },
+}
+
+
+@dataclass
+class Default_Train_Args:
+    pretrained_model_name_or_path: str | None = None
+    revision: str | None = None
+    dataset_name: str | None = None
+    dataset_config_name: str | None = None
+    train_data_dir: str | None = None
+    image_column: str = "column"
+    caption_column: str = "text"
+    validation_prompt: str | None = None
+    num_validation_images: int = 4
+    validation_epochs: int = 1
+    max_train_samples: int | None = None
+    output_dir: str = "Bee-sd-model-finetuned-lora"
+    cache_dir: str | None = None
+    seed: int | None = None
+    resolution: int = 512
+    center_crop: bool = False
+    random_flip: bool = True
+    train_text_encoder: bool = True
+    use_peft: bool = True
+    lora_r: int = 4
+    lora_alpha: int = 32
+    lora_dropout: float = 0.0
+    lora_bias: str = "none"
+    lora_text_encoder_r: int = 4
+    lora_text_encoder_alpha: int = 32
+    lora_text_encoder_dropout: float = 0.0
+    lora_text_encoder_bias: str = "none"
+    train_batch_size: int = 16
+    max_train_steps: int | None = None
+    gradient_accumulation_steps: int = 1
+    gradient_checkpointing: bool = True
+    learning_rate: float = 1e-4
+    scale_lr: bool = False
+    lr_scheduler: str = "constant"
+    lr_warmup_steps: int = 500
+    use_8bit_adam: bool = True
+    allow_tf32: bool = True
+    dataloader_num_workers: int = 0
+    adam_beta1: float = 0.9
+    adam_beta2: float = 0.999
+    adam_weight_decay: float = 1e-2
+    adam_epsilon: float = 1e-08
+    max_grad_norm: float = 1.0
+    push_to_hub: bool = False
+    hub_token: str | None = None
+    logging_dir: str = "Bee-logs"
+    mixed_precision: str | None = None
+    report_to: str = "tensorboard"
+    local_rank: int = -1
+    checkpointing_steps: int = 500
+    checkpoints_total_limit: int | None = None
+    resume_from_checkpoint: str | None = None
+    enable_xformers_memory_efficient_attention: bool = True
+
+
+DATASET_NAME_MAPPING = {
+    "lora": ("image", "text"),
 }
 
 
