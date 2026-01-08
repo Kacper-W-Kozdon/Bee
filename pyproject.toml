@@ -34,6 +34,10 @@ requires = [
     "torchvision",
     "peft",
     "bitsandbytes",
+    "datasets",
+    "packaging",
+    "numpy",
+    "tqdm",
 ]
 test_requires = [
     "pytest",

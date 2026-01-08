@@ -6,10 +6,13 @@ datasets
 diffusers
 huggingface_hub
 lazy_loader
+numpy
+packaging
 peft
 Pillow
 pythonnet
 toga
 torch
 torchvision
+tqdm
 transformers
