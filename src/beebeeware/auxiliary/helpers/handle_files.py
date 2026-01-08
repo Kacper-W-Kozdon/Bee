@@ -108,7 +108,7 @@ async def loader(libraries: list[str], counter: int = 0):
 
 
 @capture_decorator
-async def load_libs(widget: toga.Widget, libraries: list[str]):
+async def load_libs(widget_progress_bar: toga.Widget, libraries: list[str]):
     """
     Docstring for load_libs: delays loading the libs without triggering
     pylint, mypy or pylance.
@@ -118,9 +118,10 @@ async def load_libs(widget: toga.Widget, libraries: list[str]):
     :param widget: Description
     :type widget: toga.Widget
     """
-    async for item in loader(libraries):
-        widget.value = item
 
-        print(widget.value)
+    async for item in loader(libraries):
+        widget_progress_bar.value += item
+
+        print(f"{widget_progress_bar.value=}.")
 
         await asyncio.sleep(0.1)

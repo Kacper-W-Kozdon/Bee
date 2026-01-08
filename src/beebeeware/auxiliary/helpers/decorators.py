@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import os
 import time
 from functools import wraps
@@ -87,6 +88,16 @@ def timing(fun) -> Callable:
     return outer
 
 
+async def capture_stream(fun: Callable, widget: toga.Widget, *args, **kwargs):
+    with capture() as out:  # noqa: F841
+        task = asyncio.create_task(fun(*args, **kwargs))
+        await task
+        widget.value = str(widget.value) + str(out[0].getvalue())
+        print(f"Captured output: {widget.value=}.")
+        widget.refresh()
+        return None
+
+
 def capture_decorator(fun) -> Callable:
     loop = asyncio.get_event_loop()
 
@@ -100,26 +111,31 @@ def capture_decorator(fun) -> Callable:
             raise TypeError(f"Expected a toga.Widget instance. Got {widget_out=}.")
 
         async def inner(*args, **kwargs):
-            task = asyncio.create_task(fun(*args, **kwargs))
-            await task
+            return fun(*args, **kwargs)
 
         if not isinstance(widget, toga.Widget):
-            await inner(args, kwargs)
+            task = asyncio.create_task(inner(args, kwargs))
+            await task
 
         print(f"capture_decorator(): {widget_out.id=}.")
 
         async def inner_captured(*args, **kwargs):
             print(f"inner_captured(): {args=}.")
-            with capture() as out:  # noqa: F841
-                widget, *_ = args
-                args = tuple(args[1:])
-                task = asyncio.create_task(fun(*args, **kwargs))
-                await task
+            # with capture() as out:  # noqa: F841
+            #     widget, *_ = args
+            #     args = tuple(args[1:])
+            #     fun(*args, **kwargs)
+            widget, *_, libraries = args
+            args_ = copy.copy(tuple(args[1:]))
+            for library in libraries:
+                args_ = list(args_)
+                args_[-1] = [library]
+                args_ = tuple(args_)
+                await capture_stream(fun, widget, *args_, **kwargs)
 
-            widget.value = out[0]
-            print(f"Captured output: {widget.value=}.")
-            widget.refresh()
+            await asyncio.sleep(0.1)
 
-        await inner_captured(*args, **kwargs)
+        task = asyncio.create_task(inner_captured(*args, **kwargs))
+        await task
 
     return outer
