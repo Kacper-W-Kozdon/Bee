@@ -45,6 +45,7 @@ from .auxiliary.helpers.handlers import update_selection  # noqa
 from .auxiliary.helpers.handlers import use_recommended  # noqa
 from .auxiliary.helpers.handlers import confirm_images, select_previews  # noqa
 from .auxiliary.helpers.managers import capture  # noqa
+from .auxiliary.helpers.models_and_configs import Default_Train_Args  # noqa
 from .auxiliary.helpers.models_and_configs import get_models  # noqa
 from .auxiliary.helpers.models_and_configs import get_models_page  # noqa
 from .auxiliary.helpers.models_and_configs import recommended_config  # noqa
@@ -84,6 +85,7 @@ torch: ModuleType = ModuleType("torch")
 default_pipeline: str = "StableDiffusionPipeline"
 recommended_base: str = "sd-legacy/stable-diffusion-v1-5"
 recommended_lora: str = "latent-consistency/lcm-lora-sdv1-5"
+default_train_args = Default_Train_Args()
 
 
 # pylint: disable=invalid-name
