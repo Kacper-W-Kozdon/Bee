@@ -37,6 +37,7 @@ from toga.window import FilteredWidgetRegistry
 from .auxiliary.helpers.decorators import timing  # noqa
 from .auxiliary.helpers.handle_files import list_files  # noqa
 from .auxiliary.helpers.handle_files import Loader, load_libs, loader  # noqa
+from .auxiliary.helpers.handlers import advanced_settings  # noqa
 from .auxiliary.helpers.handlers import crop_image  # noqa
 from .auxiliary.helpers.handlers import default  # noqa
 from .auxiliary.helpers.handlers import get_next  # noqa
@@ -279,8 +280,21 @@ class BeeBeeware(toga.App):
                 "confirm_images": confirm_images,
                 "Crop_image": crop_image,
                 "Use Recommended": use_recommended,
+                "Advanced Settings": advanced_settings,
             }
         )
+
+        settings = toga.Command(
+            self.aux_uttons["Advanced Settings"],
+            text="Settings",
+            tooltip="Advanced settings for the training script.",
+            shortcut=toga.Key.MOD_1 + "k",
+            group=toga.commands.Group.SETTINGS,
+            section=0,
+        )
+
+        self.commands.add(settings)
+        self.main_window.toolbar.add(settings)
 
         menu_previews_split = toga.SplitContainer(style=Pack(direction=COLUMN))
 

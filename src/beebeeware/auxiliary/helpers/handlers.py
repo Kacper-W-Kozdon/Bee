@@ -24,7 +24,7 @@ from toga.widgets.table import OnSelectHandler
 
 from ..widgets.opencv_widgets import CVView
 from .decorators import timing
-from .models_and_configs import get_models_page
+from .models_and_configs import Default_Train_Args, get_models_page
 
 # pylint: disable-next=no-member,unknown-option-value
 clr.AddReference("System.Drawing")  # noqa # type: ignore # pylint: disable-next=wrong-import-order,wrong-import-position,import-position,unused-import,import-error
@@ -56,6 +56,12 @@ recommended_lora: str = "latent-consistency/lcm-lora-sdv1-5"
 image_dimensions: Callable[..., dict[str, int]] = lambda: {"height": 240, "width": 320}  # noqa: E731
 
 BeeBeeware: type | None = None
+
+
+def advanced_settings(sender, **kwargs):
+    print("Command activated")
+    print(f"{Default_Train_Args=}.")
+    raise NotImplementedError
 
 
 @timing
