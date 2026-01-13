@@ -289,7 +289,7 @@ class BeeBeeware(toga.App):
             text="Settings",
             tooltip="Advanced settings for the training script.",
             shortcut=toga.Key.MOD_1 + "k",
-            group=toga.commands.Group.SETTINGS,
+            group=toga.Group.SETTINGS,
             section=0,
         )
 
