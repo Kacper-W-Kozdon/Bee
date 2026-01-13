@@ -285,7 +285,7 @@ class BeeBeeware(toga.App):
         )
 
         settings = toga.Command(
-            self.aux_uttons["Advanced Settings"],
+            self.aux_buttons["Advanced Settings"],
             text="Settings",
             tooltip="Advanced settings for the training script.",
             shortcut=toga.Key.MOD_1 + "k",
