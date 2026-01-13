@@ -57,10 +57,13 @@ image_dimensions: Callable[..., dict[str, int]] = lambda: {"height": 240, "width
 
 BeeBeeware: type | None = None
 
+default_train_args = Default_Train_Args()
 
+
+@timing
 def advanced_settings(sender, **kwargs):
     print("Command activated")
-    print(f"{Default_Train_Args=}.")
+    print(f"{repr(default_train_args)=}.")
     raise NotImplementedError
 
 
