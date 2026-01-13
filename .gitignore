@@ -60,3 +60,6 @@ var/
 
 # Briefcase log files
 logs/
+
+# Files which are not parts of the app
+experiments.py
