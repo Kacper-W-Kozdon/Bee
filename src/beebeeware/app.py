@@ -227,6 +227,7 @@ class BeeBeeware(toga.App):
     )
     files_list: list[str, pathlib.Path] = []
     images_list: list[str, pathlib.Path] = []
+    train_args: Default_Train_Args = Default_Train_Args()
 
     def startup(self):
         """Construct and show the Toga application.
@@ -292,6 +293,7 @@ class BeeBeeware(toga.App):
             group=toga.Group.SETTINGS,
             section=0,
         )
+        setattr(settings, "app", self)
 
         self.commands.add(settings)
         self.main_window.toolbar.add(settings)

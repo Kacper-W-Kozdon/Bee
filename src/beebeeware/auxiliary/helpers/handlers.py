@@ -1,4 +1,6 @@
+import asyncio
 import copy
+import dataclasses
 import os
 import pathlib
 from types import ModuleType
@@ -21,6 +23,7 @@ from toga.widgets.button import OnPressHandler
 from toga.widgets.canvas import OnTouchHandler
 from toga.widgets.multilinetextinput import OnChangeHandler
 from toga.widgets.table import OnSelectHandler
+from toga.window import OnCloseHandler
 
 from ..widgets.opencv_widgets import CVView
 from .decorators import timing
@@ -60,11 +63,86 @@ BeeBeeware: type | None = None
 default_train_args = Default_Train_Args()
 
 
+class Update_Settings(OnCloseHandler):
+    def __init__(self, app: toga.App):
+        if not isinstance(app, toga.App):
+            raise TypeError(
+                f"Expected a toga.App instance in the request to open the settings. Got {app=}."
+            )
+
+        self.app = app
+
+    def __call__(self, window: toga.Window, **kwargs):
+        print("Updating the settings...")
+        raise NotImplementedError
+        return True
+
+
+async def open_settings_window(app: toga.App, sender: toga.Command):
+    if not isinstance(app, toga.App):
+        raise TypeError(
+            f"Expected a toga.App instance in the request to open the settings. Got {app=}."
+        )
+
+    if not isinstance(sender, toga.Command):
+        raise TypeError(f"Expected the sender to be a toga.Command. Got {sender=}.")
+
+    # pylint: disable-next=not-callable
+    setattr(
+        app,
+        "settings_window",
+        toga.Window(
+            id="Settings_Window",
+            title="Advanced Settings",
+            on_close=Update_Settings(app),
+        ),
+    )
+
+    settings_window = getattr(app, "settings_window", None)
+
+    if not isinstance(settings_window, toga.Window):
+        raise TypeError(
+            f"The settings window was not properly initialised. Expected a toga.Window instance. Got {settings_window=}."
+        )
+
+    settings_box = toga.Box(id="advanced_settings_box", style=Pack(direction=COLUMN))
+
+    train_args = getattr(app, "train_args", None)
+
+    if train_args is None:
+        raise TypeError(
+            f"Training args attribute was not initialised. Expected Default_Train_Args instance. Got {train_args=}."
+        )
+
+    for field in dataclasses.fields(train_args):
+        field_name = toga.Label(field.name)
+        field_type = toga.Label(str(field.type))
+        field_value = toga.TextInput(id=f"{field_name}_value")
+
+        setting_field_box = toga.Box(
+            id=f"{field_name}_setting",
+            style=Pack(direction=ROW),
+            children=[field_name, field_type, field_value],
+        )
+
+        settings_box.add(setting_field_box)
+
+    settings_window.content = settings_box
+
+    settings_window.show()
+    return settings_window
+
+
 @timing
 def advanced_settings(sender, **kwargs):
-    print("Command activated")
-    print(f"{repr(default_train_args)=}.")
+    print("Command activated.")
+    print(f"App {sender=}.")
+    print(f"{sender.app=}")
+    for field in dataclasses.fields(sender.app.train_args):
+        print(f"{field.name, field.type, field.default=}")
     raise NotImplementedError
+
+    asyncio.create_task(open_settings_window(sender.app, sender))
 
 
 @timing
