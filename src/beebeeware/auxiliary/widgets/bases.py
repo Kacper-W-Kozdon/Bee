@@ -196,10 +196,12 @@ class CustomCanvas(toga.ImageView, toga.Canvas):
 
     @image.setter
     def image(self, image: ImageContentT | pathlib.Path | str) -> None:
+        if image is None:
+            raise ValueError(
+                f"No image was provided. Expected ImageContentT | pathlib.Path | str. Got {image=}."
+            )
         if isinstance(image, toga.Image):
             self._image = image
-        elif image is None:
-            self._image = None
         else:
             self._image = toga.Image(image)
 
@@ -212,7 +214,7 @@ class CustomCanvas(toga.ImageView, toga.Canvas):
         if isinstance(self.width_, (int, float)):
             width = int(self.width_)
 
-        if pathlib.Path(self._image.path).exists():
+        if pathlib.Path(str(self._image.path)).exists():
             loaded_image = WinImage.FromFile(str(self._image.path))
 
             if any([not width, not height]):
