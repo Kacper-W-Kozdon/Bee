@@ -126,7 +126,7 @@ class CVView(CustomCanvas):
                         f"The path to the training image could not be retrieved. Provide image_path param or an id param in the form <path_to_the_image.extension>_image. Got {_path=}."
                     )
 
-        super(toga.Canvas, CustomCanvas).__init__(
+        toga.Canvas.__init__(
             self,
             id,
             style,
@@ -137,7 +137,7 @@ class CVView(CustomCanvas):
             **kwargs,
         )
 
-        super(toga.ImageView, CustomCanvas).__init__(self, image, id, style, **kwargs)
+        toga.ImageView.__init__(self, image, id, style, **kwargs)
         # super().__init__(image=image, id=id, style=style, on_resize=on_resize, on_press=on_press, on_release=on_release, on_drag=on_drag, **kwargs)
 
         # self.image_view = toga.ImageView(image, id, style, **kwargs)
