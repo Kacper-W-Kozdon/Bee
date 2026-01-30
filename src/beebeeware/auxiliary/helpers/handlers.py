@@ -134,13 +134,13 @@ async def open_settings_window(app: toga.App, sender: toga.Command):
 
 
 @timing
-def advanced_settings(sender, **kwargs):
+async def advanced_settings(sender, **kwargs):
     print("Command activated.")
     print(f"App {sender=}.")
     print(f"{sender.app=}")
     for field in dataclasses.fields(sender.app.train_args):
         print(f"{field.name, field.type, field.default=}")
-    raise NotImplementedError
+    # raise NotImplementedError
 
     asyncio.create_task(open_settings_window(sender.app, sender))
 
