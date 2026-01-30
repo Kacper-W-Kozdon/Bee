@@ -74,7 +74,8 @@ class Update_Settings(OnCloseHandler):
 
     def __call__(self, window: toga.Window, **kwargs):
         print("Updating the settings...")
-        raise NotImplementedError
+        # raise NotImplementedError
+        print("Closing the window...")
         return True
 
 
@@ -105,6 +106,7 @@ async def open_settings_window(app: toga.App, sender: toga.Command):
             f"The settings window was not properly initialised. Expected a toga.Window instance. Got {settings_window=}."
         )
 
+    # settings_box = toga.ScrollContainer(id="advanced_settings_box", style=Pack(direction=COLUMN))
     settings_box = toga.Box(id="advanced_settings_box", style=Pack(direction=COLUMN))
 
     train_args = getattr(app, "train_args", None)
@@ -127,14 +129,14 @@ async def open_settings_window(app: toga.App, sender: toga.Command):
 
         settings_box.add(setting_field_box)
 
-    settings_window.content = settings_box
+    settings_window.content = toga.ScrollContainer(content=settings_box)
 
     settings_window.show()
     return settings_window
 
 
 @timing
-async def advanced_settings(sender, **kwargs):
+def advanced_settings(sender, **kwargs):
     print("Command activated.")
     print(f"App {sender=}.")
     print(f"{sender.app=}")
