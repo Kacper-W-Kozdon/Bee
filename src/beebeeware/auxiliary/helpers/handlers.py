@@ -83,9 +83,7 @@ class Update_Settings(OnCloseHandler):
             )
 
         for field in dataclasses.fields(train_args):
-            field_name = toga.Label(field.name)
-
-            setattr(train_args, field_name, window.widgets[f"{field_name}_value"].value)
+            setattr(train_args, field.name, window.widgets[f"{field.name}_value"].value)
 
         print("Closing the window...")
         return True
