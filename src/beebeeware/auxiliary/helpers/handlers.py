@@ -75,6 +75,18 @@ class Update_Settings(OnCloseHandler):
     def __call__(self, window: toga.Window, **kwargs):
         print("Updating the settings...")
         # raise NotImplementedError
+        train_args = getattr(self.app, "train_args", None)
+
+        if not isinstance(train_args, Default_Train_Args):
+            raise TypeError(
+                f"train_args were not initialised properly. Expected a Default_Train_Args dataclass. Got {train_args=}."
+            )
+
+        for field in dataclasses.fields(train_args):
+            field_name = toga.Label(field.name)
+
+            setattr(train_args, field_name, window.widgets[f"{field_name}_value"].value)
+
         print("Closing the window...")
         return True
 
@@ -119,7 +131,9 @@ async def open_settings_window(app: toga.App, sender: toga.Command):
     for field in dataclasses.fields(train_args):
         field_name = toga.Label(field.name)
         field_type = toga.Label(str(field.type))
-        field_value = toga.TextInput(id=f"{field_name}_value")
+        field_value = toga.TextInput(
+            id=f"{field_name}_value", value=getattr(app, "config").get(field_name)
+        )
 
         setting_field_box = toga.Box(
             id=f"{field_name}_setting",
