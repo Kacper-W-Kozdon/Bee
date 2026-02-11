@@ -127,15 +127,29 @@ async def open_settings_window(app: toga.App, sender: toga.Command):
         )
 
     for field in dataclasses.fields(train_args):
-        field_name = toga.Label(field.name)
-        field_type = toga.Label(str(field.type))
+        visible: str = (
+            "VISIBLE" if field.name in getattr(app, "config", []) else "HIDDEN"
+        )
+
+        field_name = toga.Label(field.name, style=Pack(visibility=visible))
+        field_type = toga.Label(str(field.type), style=Pack(visibility=visible))
+
+        setting_value = (
+            getattr(app, "config").get(field_name)
+            if field_name in getattr(app, "config")
+            else getattr(app, "train_args")[field_name]
+        )
+
         field_value = toga.TextInput(
-            id=f"{field_name}_value", value=getattr(app, "config").get(field_name)
+            id=f"{field_name}_value",
+            value=setting_value,
+            readonly=(field_name in getattr(app, "config", [])),
+            style=Pack(visibility=visible),
         )
 
         setting_field_box = toga.Box(
             id=f"{field_name}_setting",
-            style=Pack(direction=ROW),
+            style=Pack(direction=ROW, visibility=visible),
             children=[field_name, field_type, field_value],
         )
 
