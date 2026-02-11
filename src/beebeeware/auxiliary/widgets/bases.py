@@ -16,6 +16,8 @@ from toga.widgets.canvas import OnResizeHandler, OnTouchHandler
 from toga.widgets.canvas.context import Context
 from toga.widgets.canvas.drawingobject import DrawingObject
 
+from ..helpers.models_and_configs import Config, Default_Train_Args
+
 clr.AddReference("System.Drawing")  # noqa
 from System.Drawing import Bitmap as WinBmap  # noqa
 from System.Drawing import Image as WinImage  # noqa
@@ -124,4 +126,54 @@ class CustomCanvas(toga.ImageView, toga.Canvas):
     @on_drag.setter
     @abstractmethod
     def on_drag(self, handler: OnTouchHandler) -> None:
+        pass
+
+
+class BeeBeewareBase(toga.App):
+    main_window_split__ = {"menu": 1, "previews": 2}
+    preview_container_split__ = {"menu": 1, "options": 1}
+    config__: OrderedDict[
+        str, Union[str, pathlib.Path, dict[str, int], list[str], None]
+    ] = OrderedDict(
+        {
+            config_name: config_value
+            for config_name, config_value in Config().__dict__.items()
+        }
+    )
+    files_list__: list[str, pathlib.Path] = []
+    images_list__: list[str, pathlib.Path] = []
+    train_args__: Default_Train_Args = Default_Train_Args()
+
+    @abstractmethod
+    def startup(self):
+        pass
+
+    @property
+    @abstractmethod
+    def main_window_split(self):
+        pass
+
+    @property
+    @abstractmethod
+    def preview_container_split(self):
+        pass
+
+    @property
+    @abstractmethod
+    def config(self):
+        pass
+
+    @property
+    @abstractmethod
+    def files_list(self):
+        pass
+
+    @property
+    @abstractmethod
+    def images_list(self):
+        pass
+
+    @property
+    @abstractmethod
+    def train_args(self):
         pass

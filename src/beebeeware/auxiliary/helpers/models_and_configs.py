@@ -2,9 +2,10 @@ import copy
 import importlib
 import inspect
 import os
+import pathlib
 import sys
 import typing
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from types import ModuleType
 from typing import Generator  # noqa
 from typing import OrderedDict  # noqa
@@ -350,3 +351,36 @@ def get_models_page(
     models = models or models_generator.send(page_num - 1)
 
     return models
+
+
+# pylint: disable-next=line-too-long
+image_dimensions: Callable[..., dict[str, int]] = lambda: {"height": 240, "width": 320}  # noqa: E731, E501
+
+
+no_preview_list: Callable[..., list[str]] = lambda: list(  # noqa: E731
+    [
+        "no_preview",
+        "config_path",
+        "base_model",
+        "lora_model",
+        "pipeline",
+        "Save_path",
+        "Load_path",
+        "source_path",
+        "image_dimensions",
+    ]
+)
+
+
+@dataclass
+class Config:
+    no_preview: list[str] = field(default_factory=no_preview_list)
+    config_path: Union[str, pathlib.Path] = ""
+    Save_path: Union[str, pathlib.Path] = ""
+    Load_path: Union[str, pathlib.Path] = ""
+    source_path: Union[str, pathlib.Path] = ""
+    image_dimensions: dict[str, int] = field(default_factory=image_dimensions)
+    base_model: Union[str, None] = ""
+    lora_model: Union[str, None] = ""
+    pipeline: Union[str, None] = default_pipeline
+    keyword: Union[str, None] = ""
