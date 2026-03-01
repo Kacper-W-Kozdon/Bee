@@ -11,7 +11,7 @@ import toga.handlers
 import toga.paths
 import toga.sources
 import toga.validators
-from toga.handlers import WrappedHandlerT, wrapped_handler
+from toga.handlers import wrapped_handler
 from toga.widgets.base import StyleT
 from toga.widgets.canvas import OnResizeHandler, OnTouchHandler
 from toga.widgets.canvas.context import Context
@@ -26,6 +26,7 @@ from System.Drawing import Size as WinSize  # noqa
 PathLikeT: TypeAlias = str | os.PathLike
 BytesLikeT: TypeAlias = bytes | bytearray | memoryview
 ImageLikeT: TypeAlias = Any
+WrappedHandlerT: TypeAlias = Callable[..., object]
 ImageContentT: TypeAlias = PathLikeT | BytesLikeT | ImageLikeT
 
 
