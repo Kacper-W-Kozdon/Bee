@@ -11,6 +11,7 @@ import toga.handlers
 import toga.paths
 import toga.sources
 import toga.validators
+from toga.handlers import WrappedHandlerT
 from toga.widgets.base import StyleT
 from toga.widgets.canvas import OnResizeHandler, OnTouchHandler
 from toga.widgets.canvas.context import Context
@@ -100,7 +101,7 @@ class CustomCanvas(toga.ImageView, toga.Canvas):
 
     @property
     @abstractmethod
-    def on_press(self) -> OnTouchHandler | Callable:
+    def on_press(self) -> OnTouchHandler | Callable | WrappedHandlerT | None:
         pass
 
     @on_press.setter
@@ -110,7 +111,7 @@ class CustomCanvas(toga.ImageView, toga.Canvas):
 
     @property
     @abstractmethod
-    def on_release(self) -> OnTouchHandler | Callable:
+    def on_release(self) -> OnTouchHandler | Callable | WrappedHandlerT | None:
         pass
 
     @on_release.setter
@@ -120,7 +121,7 @@ class CustomCanvas(toga.ImageView, toga.Canvas):
 
     @property
     @abstractmethod
-    def on_drag(self) -> OnTouchHandler | Callable:
+    def on_drag(self) -> OnTouchHandler | Callable | WrappedHandlerT | None:
         pass
 
     @on_drag.setter

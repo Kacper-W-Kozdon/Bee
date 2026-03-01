@@ -11,7 +11,7 @@ import toga.handlers
 import toga.paths
 import toga.sources
 import toga.validators
-from toga.handlers import wrapped_handler
+from toga.handlers import WrappedHandlerT, wrapped_handler
 from toga.widgets.base import StyleT
 from toga.widgets.canvas import OnResizeHandler, OnTouchHandler
 from toga.widgets.canvas.context import Context
@@ -154,10 +154,10 @@ class CVView(CustomCanvas):
         self.height = height  # Used by Pack() from style kwarg.
         self.width = width  # Used by Pack() from style kwarg.
 
-        self.on_resize = on_resize  # type: ignore
-        self.on_press = on_press  # type: ignore
-        self.on_release = on_release  # type: ignore
-        self.on_drag = on_drag  # type: ignore
+        self._on_resize = on_resize  # type: ignore
+        self._on_press = on_press  # type: ignore
+        self._on_release = on_release  # type: ignore
+        self._on_drag = on_drag  # type: ignore
 
         if not isinstance(scaling_factor, (int, float)):
             raise TypeError(
@@ -245,9 +245,10 @@ class CVView(CustomCanvas):
         self.refresh()
 
     @property
-    def on_press(self) -> OnTouchHandler | Callable:
+    def on_press(self) -> OnTouchHandler | Callable | WrappedHandlerT | None:
         """The handler invoked when the canvas is pressed. When a mouse is being used,
         this press will be with the primary (usually the left) mouse button."""
+
         return self._on_press
 
     @on_press.setter
@@ -256,7 +257,7 @@ class CVView(CustomCanvas):
         self._on_press = wrapped_handler(self, handler)
 
     @property
-    def on_release(self) -> OnTouchHandler | Callable:
+    def on_release(self) -> OnTouchHandler | Callable | WrappedHandlerT | None:
         """The handler invoked when a press on the canvas ends."""
         return self._on_release
 
@@ -265,7 +266,7 @@ class CVView(CustomCanvas):
         self._on_release = wrapped_handler(self, handler)
 
     @property
-    def on_drag(self) -> OnTouchHandler | Callable:
+    def on_drag(self) -> OnTouchHandler | Callable | WrappedHandlerT | None:
         """The handler invoked when the location of a press changes."""
         return self._on_drag
 
