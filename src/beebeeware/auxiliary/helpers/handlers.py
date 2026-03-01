@@ -343,12 +343,15 @@ def get_previous(widget: toga.Widget, page: int) -> Union[None, toga.Widget]:
 
 
 class cv_press(OnTouchHandler):
-    def __init__(self, *args, **kwargs):
-        super().__init__()
+    # def __init__(self, *args, **kwargs):
+    #     print(f"cv_press: {args=}")
+    #     super().__init__()
 
-    def __call__(self, widget: toga.Canvas, x: int, y: int, **kwargs: Any) -> None:
-        print(f"{widget.id=}")
+    def __call__(
+        self, widget: toga.Canvas, x: int = 0, y: int = 0, **kwargs: Any
+    ) -> None:
         print(f"{x, y=}")
+        print(f"{widget.id=}")
         print(f"{widget.context}")
 
         frame_size: dict[str, int] = {
@@ -387,12 +390,12 @@ class cv_press(OnTouchHandler):
 
 
 class cv_drag(OnTouchHandler):
-    def __init__(self, *args, **kwargs):
-        super().__init__()
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__()
 
     def __call__(self, widget: toga.Canvas, x: int, y: int, **kwargs: Any) -> None:
-        print(f"{widget.id=}")
         print(f"{x, y=}")
+        print(f"{widget.id=}")
 
         frame_size: dict[str, int] = {
             "height": int(image_dimensions()["height"] * widget.scaling_factor),
@@ -491,12 +494,15 @@ def update_crops(widget: toga.Widget | None = None) -> None:
 
 
 class cv_release(OnTouchHandler):
-    def __init__(self, *args, **kwargs):
-        super().__init__()
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__()
 
-    def __call__(self, widget: toga.Canvas, x: int, y: int, **kwargs: Any) -> None:
-        print(f"{widget.id=}")
+    def __call__(
+        self, widget: toga.Canvas, x: int = 0, y: int = 0, **kwargs: Any
+    ) -> None:
+        print(f"{widget=}")
         print(f"{x, y=}")
+        print(f"{widget.id=}")
 
         frame_size: dict[str, int] = {
             "height": int(image_dimensions()["height"] * widget.scaling_factor),

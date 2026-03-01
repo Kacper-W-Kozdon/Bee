@@ -155,10 +155,12 @@ class CVView(CustomCanvas):
         self.height = height  # Used by Pack() from style kwarg.
         self.width = width  # Used by Pack() from style kwarg.
 
-        self._on_resize = on_resize  # type: ignore
-        self._on_press = on_press  # type: ignore
-        self._on_release = on_release  # type: ignore
-        self._on_drag = on_drag  # type: ignore
+        # The bases of CustomCanvas base have self._on_resize, etc, already defined and they are not meant to be changed here.
+        # Handlers are meant to be saved only as public params.
+        self.on_resize = on_resize  # type: ignore
+        self.on_press = on_press  # type: ignore
+        self.on_release = on_release  # type: ignore
+        self.on_drag = on_drag  # type: ignore
 
         if not isinstance(scaling_factor, (int, float)):
             raise TypeError(
