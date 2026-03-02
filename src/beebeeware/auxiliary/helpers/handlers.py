@@ -1,8 +1,10 @@
 import asyncio
 import copy
+import csv
 import dataclasses
 import os
 import pathlib
+import shutil
 from types import ModuleType
 from typing import Generator  # noqa
 from typing import OrderedDict  # noqa
@@ -27,6 +29,7 @@ from toga.window import OnCloseHandler
 
 from ..widgets.opencv_widgets import CVView
 from .decorators import timing
+from .handle_files import list_files  # noqa
 from .models_and_configs import Default_Train_Args, get_models_page
 
 # pylint: disable-next=no-member,unknown-option-value
@@ -633,6 +636,70 @@ class crop_image(OnPressHandler):
 
         cropping_window.content = cropping_box
         cropping_window.show()
+
+
+class train_model(OnPressHandler):
+    def __init__(self): ...
+
+    def __call__(self, widget: toga.Widget, *args, **kwargs):
+        app = widget.app
+
+        print(f"Training handler called by {app=}.")
+
+        training_data: list[dict[str, str]] = []
+
+        source_path: str = f"{str(getattr(widget.app, 'destination'))}"
+        destination_path: str = f"{str(getattr(widget.app, 'destination'))}\\train"
+
+        print(f"{source_path, destination_path=}")
+
+        if not pathlib.Path(destination_path).exists():
+            confirmation = toga.ConfirmDialog(
+                "Create a folder",
+                f"Do you wish to create the folder with the {destination_path=}?",
+            )
+            if confirmation:
+                pathlib.Path(destination_path).mkdir()
+            else:
+                return None
+
+        files_to_clear = list_files(destination_path, extension="")
+        files_to_copy = [
+            file
+            for file in list_files(source_path, extension="")
+            if "_cropped" in str(file)
+        ]
+
+        for file in files_to_clear:
+            if "Bee_training_data" not in str(file):
+                raise FileNotFoundError(
+                    f"Expected 'Bee_training_data' folder name was not found in the path to the {file=}."
+                )
+
+            if "train" not in str(file):
+                raise FileNotFoundError(
+                    f"Expected 'train' folder name was not found in the path to the {file=}."
+                )
+
+            os.remove(file)
+
+        for file in files_to_copy:
+            file_name = str(file).split("\\")[-1]
+            shutil.copyfile(
+                file,
+                pathlib.Path(f"{destination_path}\\{file_name}"),
+            )
+            training_data.append({"file_name": file_name, "text": ""})
+
+        with open(f"{destination_path}\\metadata.csv", "w", newline="") as csvfile:
+            fieldnames = ["file_name", "text"]
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            writer.writeheader()
+            for row in training_data:
+                writer.writerow(row)
+
+        raise NotImplementedError
 
 
 class save_captions(OnChangeHandler):
