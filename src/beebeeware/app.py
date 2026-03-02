@@ -214,7 +214,7 @@ main_config = Config()
 
 
 class BeeBeeware(toga.App):
-    placeholder_text = "Placeholder"
+    training_data: dict[str, str] = {}
     main_window_split = {"menu": 1, "previews": 2}
     preview_container_split = {"menu": 1, "options": 1}
     config: OrderedDict[

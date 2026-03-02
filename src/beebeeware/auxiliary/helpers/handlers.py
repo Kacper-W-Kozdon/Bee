@@ -639,6 +639,17 @@ class save_captions(OnChangeHandler):
     def __init__(self): ...
 
     def __call__(self, widget, **kwargs):
+        print(f"{widget.id=}")
+        Path = widget.id
+        widget_id_split = widget.id.split(".")
+        if len(widget_id_split) > 2:
+            raise NameError(
+                f"The file's path contains unexpected '.' symbols. {Path=}."
+            )
+        cropped_image_path: str = widget.id.replace("_caption", "").replace(
+            ".", "_cropped."
+        )
+        print(f"{cropped_image_path=}.")
         raise NotImplementedError
 
 
@@ -688,6 +699,10 @@ class confirm_images(OnPressHandler):
 
         for image_id, image in enumerate(views_paths):
             img_path = image
+            if img_path is None:
+                raise TypeError(
+                    f"Expected a str or pathlib.Path instance. Got {img_path=}."
+                )
             if not pathlib.Path(img_path).exists():
                 raise LookupError(f"The path invalid. Got {img_path=}")
             if not pathlib.Path(img_path).is_file():
@@ -704,7 +719,11 @@ class confirm_images(OnPressHandler):
 
             scaling_factor = img_height / img.height
 
-            source_img_path: pathlib.Path | str = self.source_imgs_list[image_id]
+            source_img_path: pathlib.Path | str | None = self.source_imgs_list[image_id]
+            if source_img_path is None:
+                raise TypeError(
+                    f"Expected a str or pathlib.Path instance. Got {source_img_path=}."
+                )
             if not pathlib.Path(source_img_path).exists():
                 raise LookupError(f"The path invalid. Got {source_img_path=}")
             if not pathlib.Path(source_img_path).is_file():
@@ -714,7 +733,15 @@ class confirm_images(OnPressHandler):
             print(f"{img_path, source_img_path=}")
             source_img: toga.Image = toga.Image(source_img_path)
 
-            crop_press = self.window.app.aux_buttons.get("Crop_image")
+            window = self.window
+            if not isinstance(window, toga.Window):
+                raise TypeError(f"Expected a toga.Window instance. Got {window=}.")
+
+            app = window.app
+            if not getattr(app, "aux_buttons", None):
+                raise KeyError(f"aux_buttons attribute was not found in the {app=}.")
+
+            # crop_press = getattr(app, "aux_buttons").get("Crop_image")
 
             img_view = toga.Box(
                 id=str(img_path),
@@ -724,12 +751,13 @@ class confirm_images(OnPressHandler):
                         id=f"{str(source_img_path)}",
                         height=image_dimensions().get("height"),
                         width=image_dimensions().get("width"),
+                        style=Pack(margin_left=5, margin_right=10),
                     ),
-                    toga.Button(
-                        "Crop Image",
-                        id=f"{str(img_path)}_button",
-                        on_press=crop_press,
-                    ),
+                    # toga.Button(
+                    #     "Crop Image",
+                    #     id=f"{str(img_path)}_button",
+                    #     on_press=crop_press,
+                    # ),
                     CVView(
                         image=img,  # Locks the copied images open, thus cannot be overwritten.
                         id=f"{str(img_path)}_image",
@@ -741,14 +769,16 @@ class confirm_images(OnPressHandler):
                         image_path=img_path,
                         source_path=source_img_path,
                         scaling_factor=scaling_factor,
+                        style=Pack(margin_left=5, margin_right=5),
                     ),
                 ],
             )
 
             caption_box = toga.MultilineTextInput(
                 id=f"{str(img_path)}_caption",
-                placeholder="Caption the image or leave empty to auto-generate captions.",
-                on_change=save_captions,
+                placeholder=f"Caption the image or leave empty to auto-generate captions. {img_path=}",
+                on_change=save_captions(),
+                style=Pack(margin_top=5, margin_bottom=10),
             )
 
             captioned_img_view = toga.Box(
@@ -759,9 +789,9 @@ class confirm_images(OnPressHandler):
 
             cv_release_ = cv_release()
             cv_release_(
-                img_view.children[2], 0, 0
-            )  # img_view.children[2] points to the CVView from toga.Box above.
-            update_crops(img_view.children[2])
+                img_view.children[-1], 0, 0
+            )  # img_view.children[-1] points to the CVView from toga.Box above.
+            update_crops(img_view.children[-1])
             new_view.add(captioned_img_view)
 
         parent_.replace(old_view, new_view)
