@@ -689,15 +689,25 @@ class train_model(OnPressHandler):
                 file,
                 pathlib.Path(f"{destination_path}\\{file_name}"),
             )
-            training_data.append({"file_name": file_name, "text": ""})
 
         with open(f"{destination_path}\\metadata.csv", "w", newline="") as csvfile:
             fieldnames = ["file_name", "text"]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
             writer.writeheader()
-            for row in training_data:
-                writer.writerow(row)
+            if (data := getattr(widget.app, "training_data", None)) in [None, {}, [{}]]:
+                raise ValueError(
+                    f"Expected training_data list[dict[str, str]] attribute to be non-empty. Got {data=}."
+                )
+
+            training_data = [
+                {"file_name": file_name, "text": text}
+                for (file_name, text) in getattr(
+                    widget.app, "training_data", {}
+                ).items()
+            ]
+            for item in training_data:
+                writer.writerow(item)
 
         raise NotImplementedError
 
@@ -717,6 +727,21 @@ class save_captions(OnChangeHandler):
             ".", "_cropped."
         )
         print(f"{cropped_image_path=}.")
+        train_file_path: str = "\\".join(
+            cropped_image_path.split("\\").insert(-1, "train")
+        )
+
+        training_data: dict[str, str] | None = getattr(
+            widget.app, "training_data", None
+        )
+        if training_data is None:
+            training_data = {}
+            setattr(widget.app, "training_data", training_data)
+
+        training_data.update({train_file_path: str(widget.value)})
+
+        print(f"Updated captions:\n        {training_data}")
+
         raise NotImplementedError
 
 
