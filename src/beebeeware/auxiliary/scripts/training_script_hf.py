@@ -530,6 +530,10 @@ def main(train_args: dataclasses.Dataclass | None = None):
             " Please use `hf auth login` to authenticate with the Hub."
         )
 
+    raise NotImplementedError(
+        f"Function {__name__} not implemented. Called with {args=}."
+    )
+
     logging_dir = os.path.join(args.output_dir, args.logging_dir)
 
     accelerator_project_config = ProjectConfiguration(
