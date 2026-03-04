@@ -27,6 +27,7 @@ from toga.widgets.multilinetextinput import OnChangeHandler
 from toga.widgets.table import OnSelectHandler
 from toga.window import OnCloseHandler
 
+from ..scripts.training_script_hf import main as training_script
 from ..widgets.opencv_widgets import CVView
 from .decorators import timing
 from .handle_files import list_files  # noqa
@@ -708,6 +709,14 @@ class train_model(OnPressHandler):
             ]
             for item in training_data:
                 writer.writerow(item)
+
+        args_kwargs = getattr(widget.app, "train_args", {})
+        args_kwargs.update({"train_data_dir": destination_path})
+
+        print(f"Training metadata:\n        {training_data}.")
+        print(f"Training args and kwargs:\n        {args_kwargs=}.")
+
+        training_script(training_args=args_kwargs)
 
         raise NotImplementedError
 
