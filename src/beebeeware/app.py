@@ -909,15 +909,37 @@ class BeeBeeware(toga.App):
             return None
 
         summary_preview = toga.Box(id="summary_preview", style=Pack(direction=COLUMN))
+
+        summary_preview.add(toga.Label("Training overview:"))
+
+        # overview_box will be updated with terminal outputs of the training_script.
+        overview_box = toga.MultilineTextInput(
+            id="overview_box",
+            readonly=True,
+            placeholder="Press 'Train the model' to begin.",
+        )
+        summary_preview.add(overview_box)
+
+        train_button = toga.Button(
+            "Train the model", on_press=self.aux_buttons["Train"]
+        )
+        summary_preview.add(train_button)
+
+        summary_preview.add(toga.Label("Configuration:"))
+
         update_config_from_sig(self)
         for config_label, config_value_ in self.config.items():
             if config_label == "no_preview":
                 continue
 
-            if isinstance(config_value_, tuple):
-                config_value = config_value_[1]
+            if isinstance(config_value_, (tuple, list)):
+                config_value = str(config_value_[1])
+            elif isinstance(config_value_, (dict, OrderedDict, str, pathlib.Path)):
+                config_value = str(config_value_)
             else:
-                config_value = config_value_
+                raise TypeError(
+                    f"Unexpected type encountered in config. {config_value=}."
+                )
 
             label = toga.Label(config_label)
             value = toga.TextInput(
@@ -925,11 +947,6 @@ class BeeBeeware(toga.App):
             )
             config_box = toga.Box(style=Pack(direction=ROW), children=[label, value])
             summary_preview.add(config_box)
-
-        train_button = toga.Button(
-            "Train the model", on_press=self.aux_buttons["Train"]
-        )
-        summary_preview.add(train_button)
 
         self.previews_container.content = summary_preview
 

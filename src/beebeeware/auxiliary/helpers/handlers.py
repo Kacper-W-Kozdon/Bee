@@ -671,6 +671,11 @@ class train_model(OnPressHandler):
             if "_cropped" in str(file)
         ]
 
+        if not (training_images := files_to_copy):
+            raise ValueError(
+                f"Expected a list of training images. Got {training_images=}."
+            )
+
         for file in files_to_clear:
             if "Bee_training_data" not in str(file):
                 raise FileNotFoundError(
