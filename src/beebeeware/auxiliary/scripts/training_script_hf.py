@@ -27,6 +27,7 @@ import math
 import os
 import random
 from pathlib import Path
+from types import NoneType
 from typing import AsyncGenerator, Any
 import sys
 import importlib
@@ -35,7 +36,6 @@ from huggingface_hub import hf_hub_download
 
 import datasets  # noqa
 import diffusers
-import dataclasses
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -59,6 +59,7 @@ from torchvision import transforms  # noqa
 from tqdm.auto import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
 from ..helpers.managers import capture
+from ..helpers.models_and_configs import Default_Train_Args
 
 # Will error if the minimal version of diffusers is not installed. Remove at your own risks.
 check_min_version("0.14.0.dev0")
@@ -519,7 +520,12 @@ DATASET_NAME_MAPPING = {
 }
 
 
-def main(train_args: dataclasses.Dataclass | None = None):
+def main(train_args: type | dict[str, Any] | Default_Train_Args | None = None):
+    if not isinstance(train_args, (type, dict, Default_Train_Args, NoneType)):
+        raise TypeError(
+            f"Expected train_args to be an instance in (type, dict, Default_Train_Args, None). Got {type(train_args)=}."
+        )
+
     if train_args:
         args = train_args
     else:
