@@ -174,9 +174,6 @@ def update_config_from_sig(
     # except ValueError:
     #     diffusers = sys.modules["diffusers"]
 
-    AutoPipelineForText2Image = diffusers.AutoPipelineForText2Image
-    pipe = AutoPipelineForText2Image.from_pretrained(model_id)
-
     # dir_dict_config = [entry for entry in dir(pipe) if "config" in entry]
     # print(dir_dict_config)
 
@@ -192,13 +189,16 @@ def update_config_from_sig(
         )
 
     try:
+        AutoPipelineForText2Image = diffusers.AutoPipelineForText2Image
+        pipe = AutoPipelineForText2Image.from_pretrained(model_id)
         pipe_config = pipe.load_config(model_id, return_unused_kwargs=True)  # noqa: F841
+        sig = inspect.signature(pipe.__call__)
+        print(f"Pipe signature {sig=}.")
+        params = sig.parameters
     except OSError:
         pipe_config = {}  # noqa: F841
+        params = {}
     # print(config)
-    sig = inspect.signature(pipe.__call__)
-    print(f"Pipe signature {sig=}.")
-    params = sig.parameters
 
     # params_dict = {param_name: (getattr(param_data.annotation, "get_args", None), param_data.default) for param_name, param_data in params.items()}
 
