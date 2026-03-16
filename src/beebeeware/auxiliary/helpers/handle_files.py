@@ -108,16 +108,35 @@ async def loader(libraries: list[str], counter: int = 0):
 
 
 @capture_decorator
-async def load_libs(widget_progress_bar: toga.Widget, libraries: list[str]):
+async def load_libs(
+    widget_text_box: toga.Widget | None = None,
+    widget_progress_bar: toga.Widget | None = None,
+    libraries: list[str] | None = None,
+):
     """
     Docstring for load_libs: delays loading the libs without triggering
     pylint, mypy or pylance.
 
-    :param libraries: Description
+    :param widget_text_box: Text box capturing the outputs of the terminal.
+    :type widget_text_box: toga.Widget
+    :param widget_progress_bar: toga.Widget progress bar.
+    :type widget_progress_bar: toga.Widget
+    :param libraries: Libraries to import.
     :type libraries: list[str]
-    :param widget: Description
-    :type widget: toga.Widget
     """
+
+    if not isinstance(widget_text_box, toga.Widget):
+        raise TypeError(
+            f"Expected a toga.Widget instance of a (multiline) text box for displaying the terminal's messages. Got {widget_text_box=}."
+        )
+
+    if not isinstance(widget_progress_bar, toga.Widget):
+        raise TypeError(
+            f"Expected a toga.Widget progress bar instance. Got {widget_progress_bar=}."
+        )
+
+    if not isinstance(libraries, list):
+        raise TypeError(f"Expected a list of libraries for import. Got {libraries=}.")
 
     async for item in loader(libraries):
         widget_progress_bar.value += item

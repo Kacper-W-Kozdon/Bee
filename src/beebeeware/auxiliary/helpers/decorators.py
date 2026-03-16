@@ -98,6 +98,41 @@ async def capture_stream(fun: Callable, widget: toga.Widget, *args, **kwargs):
         return None
 
 
+def capture_train_output(fun) -> Callable:
+    @wraps(fun)
+    async def outer(*args, **kwargs):
+        widget = args[0]
+        if not isinstance(widget, toga.Widget):
+            raise TypeError(f"Expected a toga.Widget instance. Got {widget=}.")
+
+        async def inner(*args, **kwargs):
+            return fun(*args, **kwargs)
+
+        if not isinstance(widget, toga.Widget):
+            task = asyncio.create_task(inner(args, kwargs))
+            await task
+
+        print(f"capture_decorator(): {widget.id=}.")
+
+        async def inner_captured(*args, **kwargs):
+            print(f"inner_captured(): {args=}.")
+            # with capture() as out:  # noqa: F841
+            #     widget, *_ = args
+            #     args = tuple(args[1:])
+            #     fun(*args, **kwargs)
+            widget, *_ = args
+            args_ = copy.copy(tuple(args[1:]))
+
+            await capture_stream(fun, widget, *args_, **kwargs)
+
+            await asyncio.sleep(0.1)
+
+        task = asyncio.create_task(inner_captured(*args, **kwargs))
+        await task
+
+    return outer
+
+
 def capture_decorator(fun) -> Callable:
     loop = asyncio.get_event_loop()
 

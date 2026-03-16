@@ -58,6 +58,7 @@ from packaging import version
 from torchvision import transforms  # noqa
 from tqdm.auto import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
+from ..helpers.decorators import capture_train_output
 from ..helpers.managers import capture
 from ..helpers.models_and_configs import Default_Train_Args
 
@@ -520,6 +521,7 @@ DATASET_NAME_MAPPING = {
 }
 
 
+@capture_train_output
 def main(train_args: type | dict[str, Any] | Default_Train_Args | None = None):
     if not isinstance(train_args, (type, dict, Default_Train_Args, NoneType)):
         raise TypeError(
