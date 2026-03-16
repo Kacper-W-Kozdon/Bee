@@ -181,7 +181,7 @@ def update_config_from_sig(
         raise ValueError(f"Expected value from ['base', 'lora']. Got {base_or_lora=}")
 
     if instance:
-        model_id = instance.config.get(f"{base_or_lora}_model")
+        model_id = getattr(instance, "config").get(f"{base_or_lora}_model")
 
     if model_id in ["", None]:
         raise ValueError(
@@ -245,7 +245,7 @@ def update_config_from_sig(
     print(f"{pipe_config=}")
 
     if instance:
-        instance.config.update(ret)
+        getattr(instance, "config").update(ret)
 
     return ret
 

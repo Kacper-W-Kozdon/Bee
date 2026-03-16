@@ -721,7 +721,7 @@ class train_model(OnPressHandler):
         print(f"Training metadata:\n        {training_data}.")
         print(f"Training args and kwargs:\n        {args_kwargs=}.")
 
-        training_script(training_args=args_kwargs)
+        training_script(train_args=args_kwargs)
 
         raise NotImplementedError
 
