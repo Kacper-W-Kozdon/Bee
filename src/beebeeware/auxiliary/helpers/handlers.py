@@ -640,8 +640,6 @@ class crop_image(OnPressHandler):
 
 
 class train_model(OnPressHandler):
-    def __init__(self): ...
-
     def __call__(self, widget: toga.Widget, *args, **kwargs):
         app = widget.app
 
