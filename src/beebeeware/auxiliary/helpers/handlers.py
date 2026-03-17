@@ -2,6 +2,7 @@ import asyncio
 import copy
 import csv
 import dataclasses
+import importlib
 import os
 import pathlib
 import shutil
@@ -28,7 +29,6 @@ from toga.widgets.table import OnSelectHandler
 from toga.widgets.textinput import OnConfirmHandler
 from toga.window import OnCloseHandler
 
-from ..scripts.training_script_hf import main as training_script
 from ..widgets.opencv_widgets import CVView
 from .decorators import timing
 from .handle_files import list_files  # noqa
@@ -244,48 +244,58 @@ recommended_config: dict[str, dict[str, Union[str, float, int, bool]]] = {
 }
 
 
-@timing
-def use_recommended(widget: toga.Widget, **kwargs):
-    if not isinstance(widget, toga.Button):
-        raise TypeError(
-            f"The handler was not called by a toga.Button. The handler was called by {widget=}."
-        )
-
-    config = copy.copy(recommended_config["base"])
-
-    match widget.id:
-        case "small_dataset_button":
-            config.update(recommended_config["small_dataset"])
-        case "medium_dataset_button":
-            config.update(recommended_config["medium_dataset"])
-        case "big_dataset_button":
-            config.update(recommended_config["big_dataset"])
-        case _:
-            raise KeyError(
-                f"The button's id is expected to be one of: 'small_dataset_button', 'medium_dataset_button', 'big_dataset_button'. Got {widget.id=}."
+class use_recommended(OnPressHandler):
+    def __init__(self, app: toga.App | None = None, *args, **kwargs):
+        if not isinstance(app, toga.App):
+            raise TypeError(
+                f"The button is expected to be connected to the toga.App instance. Got {app=}."
             )
-    previews_container = getattr(widget.app, "previews_container")
 
-    if not isinstance(previews_container, toga.ScrollContainer):
-        raise TypeError(
-            f"Expected the previews_container to be a toga.ScrollContainer instance. Got {previews_container=}."
-        )
+        self.app = app
 
-    preview_config = getattr(widget.app, "preview_config")
+    @timing
+    def __call__(self, widget: toga.Widget, **kwargs):
+        if not isinstance(widget, toga.Button):
+            raise TypeError(
+                f"The handler was not called by a toga.Button. The handler was called by {widget=}."
+            )
 
-    if not isinstance(preview_config, Callable):
-        raise TypeError(
-            f"Expected the preview_config method to be Callable. Got {previews_container=}."
-        )
+        config = copy.copy(recommended_config["base"])
 
-    preview_config(widget)
+        match widget.id:
+            case "small_dataset_button":
+                config.update(recommended_config["small_dataset"])
+            case "medium_dataset_button":
+                config.update(recommended_config["medium_dataset"])
+            case "big_dataset_button":
+                config.update(recommended_config["big_dataset"])
+            case _:
+                raise KeyError(
+                    f"The button's id is expected to be one of: 'small_dataset_button', 'medium_dataset_button', 'big_dataset_button'. Got {widget.id=}."
+                )
+        previews_container = getattr(self.app, "previews_container")
 
-    previews_container.refresh()
+        if not isinstance(previews_container, toga.ScrollContainer):
+            raise TypeError(
+                f"Expected the previews_container to be a toga.ScrollContainer instance. Got {previews_container=}."
+            )
 
-    print(f"Using recommended {config=}.")
-    getattr(widget.app, "config").update(config)
-    print(f"Updated config: {getattr(widget.app, "config")=}.")
-    # raise NotImplementedError
+        preview_config = getattr(self.app, "preview_config")
+
+        if not callable(preview_config):
+            raise TypeError(
+                f"Expected the preview_config method to be Callable. Got {previews_container=}."
+            )
+
+        print(f"Using recommended {config=}.")
+        print(f"{widget, self.app=}")
+        getattr(self.app, "config").update(config)
+        print(f"Updated config: {getattr(self.app, "config")=}.")
+
+        preview_config(widget)
+
+        previews_container.refresh()
+        # raise NotImplementedError
 
 
 class select_previews(OnSelectHandler):
@@ -741,6 +751,10 @@ class train_model(OnPressHandler):
 
         print(f"Training metadata:\n        {training_data}.")
         print(f"Training args and kwargs:\n        {args_kwargs=}.")
+
+        # from ..scripts.training_script_hf import main as training_script
+        scripts = importlib.import_module("..scripts", "beebeeware.auxiliary.scripts")
+        training_script: Callable = scripts.main
 
         training_script(train_args=args_kwargs)
 

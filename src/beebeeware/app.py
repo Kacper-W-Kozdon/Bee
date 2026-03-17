@@ -59,7 +59,6 @@ from .auxiliary.helpers.models_and_configs import update_config_from_sig  # noqa
 from .auxiliary.helpers.models_and_configs import get_default_base_and_lora  # isort: skip
 
 # pylint: enable=unused-import
-# from .auxiliary.scripts.training_script_hf import train_model  # noqa
 
 # pylint: disable-next=no-member,unknown-option-value
 clr.AddReference("System.Drawing")  # noqa # type: ignore # pylint: disable-next=wrong-import-order,wrong-import-position,import-position,unused-import,import-error
@@ -275,7 +274,7 @@ class BeeBeeware(toga.App):
                 "Next": self.next,
                 "Previous": self.previous,
                 "Default": default,
-                "Train": train_model,
+                "Train": train_model(),
                 "confirm_images": confirm_images,
                 "Crop_image": crop_image,
                 "Use Recommended": use_recommended,
@@ -830,13 +829,19 @@ class BeeBeeware(toga.App):
 
         recommended_label = toga.Label("Use recommended configs: ")
         recommended_small_button = toga.Button(
-            text="Small dataset", id="small_dataset_button", on_press=use_recommended
+            text="Small dataset",
+            id="small_dataset_button",
+            on_press=self.aux_buttons["Use Recommended"](app=self),
         )
         recommended_medium_button = toga.Button(
-            text="Medium dataset", id="medium_dataset_button", on_press=use_recommended
+            text="Medium dataset",
+            id="medium_dataset_button",
+            on_press=self.aux_buttons["Use Recommended"](app=self),
         )
         recommended_big_button = toga.Button(
-            text="Big dataset", id="big_dataset_button", on_press=use_recommended
+            text="Big dataset",
+            id="big_dataset_button",
+            on_press=self.aux_buttons["Use Recommended"](app=self),
         )
 
         recommended_box = toga.Box(
