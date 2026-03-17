@@ -25,6 +25,7 @@ from toga.widgets.button import OnPressHandler
 from toga.widgets.canvas import OnTouchHandler
 from toga.widgets.multilinetextinput import OnChangeHandler
 from toga.widgets.table import OnSelectHandler
+from toga.widgets.textinput import OnConfirmHandler
 from toga.window import OnCloseHandler
 
 from ..scripts.training_script_hf import main as training_script
@@ -65,6 +66,11 @@ image_dimensions: Callable[..., dict[str, int]] = lambda: {"height": 240, "width
 BeeBeeware: type | None = None
 
 default_train_args = Default_Train_Args()
+
+
+class update_config_val(OnConfirmHandler, OnChangeHandler):
+    def __call__(self, widget, **kwargs):
+        raise NotImplementedError
 
 
 class Update_Settings(OnCloseHandler):
@@ -258,6 +264,23 @@ def use_recommended(widget: toga.Widget, **kwargs):
             raise KeyError(
                 f"The button's id is expected to be one of: 'small_dataset_button', 'medium_dataset_button', 'big_dataset_button'. Got {widget.id=}."
             )
+    previews_container = getattr(widget.app, "previews_container")
+
+    if not isinstance(previews_container, toga.ScrollContainer):
+        raise TypeError(
+            f"Expected the previews_container to be a toga.ScrollContainer instance. Got {previews_container=}."
+        )
+
+    preview_config = getattr(widget.app, "preview_config")
+
+    if not isinstance(preview_config, Callable):
+        raise TypeError(
+            f"Expected the preview_config method to be Callable. Got {previews_container=}."
+        )
+
+    preview_config(widget)
+
+    previews_container.refresh()
 
     print(f"Using recommended {config=}.")
     getattr(widget.app, "config").update(config)

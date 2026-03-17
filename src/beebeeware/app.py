@@ -43,6 +43,7 @@ from .auxiliary.helpers.handlers import default  # noqa
 from .auxiliary.helpers.handlers import get_next  # noqa
 from .auxiliary.helpers.handlers import get_previous  # noqa
 from .auxiliary.helpers.handlers import train_model  # noqa
+from .auxiliary.helpers.handlers import update_config_val  # noqa
 from .auxiliary.helpers.handlers import update_selection  # noqa
 from .auxiliary.helpers.handlers import use_recommended  # noqa
 from .auxiliary.helpers.handlers import confirm_images, select_previews  # noqa
@@ -829,13 +830,13 @@ class BeeBeeware(toga.App):
 
         recommended_label = toga.Label("Use recommended configs: ")
         recommended_small_button = toga.Button(
-            id="small_dataset_button", on_press=use_recommended
+            text="Small dataset", id="small_dataset_button", on_press=use_recommended
         )
         recommended_medium_button = toga.Button(
-            id="medium_dataset_button", on_press=use_recommended
+            text="Medium dataset", id="medium_dataset_button", on_press=use_recommended
         )
         recommended_big_button = toga.Button(
-            id="big_dataset_button", on_press=use_recommended
+            text="Big dataset", id="big_dataset_button", on_press=use_recommended
         )
 
         recommended_box = toga.Box(
@@ -880,7 +881,11 @@ class BeeBeeware(toga.App):
             config_types = toga.TextInput(id=types_id, value=input_types, readonly=True)
             config_box = toga.Box(id=config_id, style=Pack(direction=ROW))
             config_value = toga.TextInput(
-                id=values_id, placeholder=input_default, validators=validators
+                id=values_id,
+                placeholder=input_default,
+                validators=validators,
+                on_change=update_config_val,
+                on_confirm=update_config_val,
             )
 
             config_box.add(label)
