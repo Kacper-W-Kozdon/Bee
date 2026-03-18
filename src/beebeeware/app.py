@@ -889,8 +889,8 @@ class BeeBeeware(toga.App):
                 id=values_id,
                 placeholder=input_default,
                 validators=validators,
-                on_change=update_config_val,
-                on_confirm=update_config_val,
+                on_change=update_config_val(),
+                on_confirm=update_config_val(),
             )
 
             config_box.add(label)

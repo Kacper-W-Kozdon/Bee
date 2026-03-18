@@ -6,7 +6,7 @@ import importlib
 import os
 import pathlib
 import shutil
-from types import ModuleType
+from types import ModuleType  # noqa
 from typing import Generator  # noqa
 from typing import OrderedDict  # noqa
 from typing import Any, AsyncGenerator, Callable, TypeAlias, Union  # noqa
@@ -69,7 +69,25 @@ default_train_args = Default_Train_Args()
 
 
 class update_config_val(OnConfirmHandler, OnChangeHandler):
-    def __call__(self, widget, **kwargs):
+    def __init__(self, *args, **kwargs): ...
+
+    def __call__(self, widget, **kwargs) -> None:
+        config_key: str = (widget.id).replace("value_", "")
+
+        if getattr(widget.app, "config", None) is None:
+            raise ValueError(
+                f"The configs are not populated or the {widget.app=} is missing the 'config' attribute."
+            )
+
+        config_dict = getattr(widget.app, "config", {})
+
+        if not isinstance(config_dict, (OrderedDict, dict)):
+            raise TypeError(
+                f"Expected the configs to be a dict | OrderedDict. Got {type(config_dict)}."
+            )
+
+        config_dict[config_key] = widget.value
+
         raise NotImplementedError
 
 
