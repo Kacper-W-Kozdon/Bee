@@ -793,7 +793,7 @@ class BeeBeeware(toga.App):
 
         # raise NotImplementedError
 
-    def preview_config(self, widget) -> None:
+    async def preview_config(self, widget) -> None:
         if not all([lib in sys.modules for lib in startup_libs]):
             toga.InfoDialog(
                 "Please, wait.", "Not all the libraries have been loaded yet."
@@ -812,9 +812,9 @@ class BeeBeeware(toga.App):
         base_model = self.config.get("base_model")
         # lora_model = self.config.get("lora_model")
 
-        model_configs: OrderedDict[str, Union[str, int, float, list, dict, None]] = (
-            update_config_from_sig(instance=self, model_id=base_model)
-        )
+        model_configs: OrderedDict[
+            str, Union[str, int, float, list, dict, None]
+        ] = await update_config_from_sig(instance=self, model_id=base_model)
         config.update(model_configs)  # type: ignore
 
         config_scroll = toga.Box(id="config", style=Pack(direction=COLUMN))

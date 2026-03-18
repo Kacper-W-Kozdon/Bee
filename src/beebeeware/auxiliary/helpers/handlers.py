@@ -6,6 +6,7 @@ import importlib
 import os
 import pathlib
 import shutil
+import warnings
 from types import ModuleType  # noqa
 from typing import Generator  # noqa
 from typing import OrderedDict  # noqa
@@ -272,7 +273,7 @@ class use_recommended(OnPressHandler):
         self.app = app
 
     @timing
-    def __call__(self, widget: toga.Widget, **kwargs):
+    async def __call__(self, widget: toga.Widget, **kwargs):
         if not isinstance(widget, toga.Button):
             raise TypeError(
                 f"The handler was not called by a toga.Button. The handler was called by {widget=}."
@@ -310,7 +311,7 @@ class use_recommended(OnPressHandler):
         getattr(self.app, "config").update(config)
         print(f"Updated config: {getattr(self.app, "config")=}.")
 
-        preview_config(widget)
+        await preview_config(widget)  # type: ignore
 
         previews_container.refresh()
         # raise NotImplementedError
@@ -694,6 +695,9 @@ class train_model(OnPressHandler):
     def __call__(self, widget: toga.Widget, *args, **kwargs):
         app = widget.app
 
+        if not isinstance(app, toga.App):
+            raise TypeError(f"Expected a toga.App instance. Got {app=}.")
+
         print(f"Training handler called by {app=}.")
 
         training_data: list[dict[str, str]] = []
@@ -721,9 +725,14 @@ class train_model(OnPressHandler):
         ]
 
         if not (training_images := files_to_copy):
-            raise ValueError(
-                f"Expected a list of training images. Got {training_images=}."
+            warnings.warn(
+                f"Expected a list of training images. Got {training_images=}.",
+                UserWarning,
             )
+            err_dataset = toga.ErrorDialog(
+                "Dataset error.", "No training images were provided."
+            )
+            err_dialog = app.dialog(err_dataset)  # noqa: W0612, F841  # type: ignore
 
         for file in files_to_clear:
             if "Bee_training_data" not in str(file):
