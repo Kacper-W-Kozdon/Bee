@@ -156,12 +156,15 @@ def update_config(config: Union[dict, None] = None):
 
 
 @timing
-def update_config_from_sig(
+async def update_config_from_sig(
     instance: Union[toga.App, toga.Widget, None] = None,
     model_id: Union[str, None] = None,
     base_or_lora: str = "base",
 ) -> OrderedDict[str, Union[str, int, float, None, list, dict]]:
     global diffusers
+
+    if not isinstance(instance, toga.App):
+        raise TypeError(f"Expected a toga.App instance. Got {instance=}.")
 
     if "diffusers" not in sys.modules:
         print("Importing diffusers library.")
@@ -191,9 +194,10 @@ def update_config_from_sig(
 
     try:
         print(f"Downloading {model_id=}.")
-        toga.InfoDialog(
+        down_dialog = toga.InfoDialog(
             "Downloading the model.", f"The {model_id=} is being downloaded."
         )
+        await instance.dialog(down_dialog)
         AutoPipelineForText2Image = diffusers.AutoPipelineForText2Image
         pipe = AutoPipelineForText2Image.from_pretrained(model_id)
         pipe_config = pipe.load_config(model_id, return_unused_kwargs=True)  # noqa: F841
@@ -202,9 +206,10 @@ def update_config_from_sig(
         params = sig.parameters
     except OSError as oserror:
         print(f"Failed to download {model_id=}.")
-        toga.InfoDialog(
+        err_dialog = toga.InfoDialog(
             "Downloading error.", f"Failed to download {model_id=}.\n{oserror}"
         )
+        await instance.dialog(err_dialog)
         print(oserror)
         pipe_config = {}  # noqa: F841
         params = {}

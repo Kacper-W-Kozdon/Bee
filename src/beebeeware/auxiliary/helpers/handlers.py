@@ -698,8 +698,8 @@ class train_model(OnPressHandler):
 
         training_data: list[dict[str, str]] = []
 
-        source_path: str = f"{str(getattr(widget.app, 'destination'))}"
-        destination_path: str = f"{str(getattr(widget.app, 'destination'))}\\train"
+        source_path: str = f"{str(getattr(widget.app, 'config').get('source_path'))}"
+        destination_path: str = f"{source_path}\\train"
 
         print(f"{source_path, destination_path=}")
 

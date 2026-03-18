@@ -11,6 +11,7 @@ import pathlib
 import shutil
 import sys
 import typing
+import warnings
 from dataclasses import dataclass, field
 from functools import partial, wraps
 from types import ModuleType  # pylint: disable-next=unused-import
@@ -947,8 +948,10 @@ class BeeBeeware(toga.App):
             elif isinstance(config_value_, (dict, OrderedDict, str, pathlib.Path)):
                 config_value = str(config_value_)
             else:
-                raise TypeError(
-                    f"Unexpected type encountered in config. {config_value=}."
+                config_value = ""
+                warnings.warn(
+                    f"Unexpected type encountered in config. {config_value_, type(config_value_)=}.",
+                    UserWarning,
                 )
 
             label = toga.Label(config_label)
