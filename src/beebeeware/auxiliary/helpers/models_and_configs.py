@@ -157,13 +157,14 @@ def update_config(config: Union[dict, None] = None):
 
 @timing
 def update_config_from_sig(
-    instance: Union[toga.Widget, toga.Widget, None] = None,
+    instance: Union[toga.App, toga.Widget, None] = None,
     model_id: Union[str, None] = None,
     base_or_lora: str = "base",
 ) -> OrderedDict[str, Union[str, int, float, None, list, dict]]:
     global diffusers
 
     if "diffusers" not in sys.modules:
+        print("Importing diffusers library.")
         diffusers = importlib.import_module("diffusers")
 
     if diffusers != sys.modules["diffusers"]:
@@ -189,13 +190,22 @@ def update_config_from_sig(
         )
 
     try:
+        print(f"Downloading {model_id=}.")
+        toga.InfoDialog(
+            "Downloading the model.", f"The {model_id=} is being downloaded."
+        )
         AutoPipelineForText2Image = diffusers.AutoPipelineForText2Image
         pipe = AutoPipelineForText2Image.from_pretrained(model_id)
         pipe_config = pipe.load_config(model_id, return_unused_kwargs=True)  # noqa: F841
         sig = inspect.signature(pipe.__call__)
         print(f"Pipe signature {sig=}.")
         params = sig.parameters
-    except OSError:
+    except OSError as oserror:
+        print(f"Failed to download {model_id=}.")
+        toga.InfoDialog(
+            "Downloading error.", f"Failed to download {model_id=}.\n{oserror}"
+        )
+        print(oserror)
         pipe_config = {}  # noqa: F841
         params = {}
     # print(config)

@@ -865,9 +865,9 @@ class BeeBeeware(toga.App):
                 | None
             ) = []
             label = toga.Label(config_name)
-            types_id = f"type_{label}"
-            values_id = f"value_{label}"
-            config_id = f"{label}_config"
+            types_id = f"type_{label.text}"
+            values_id = f"value_{label.text}"
+            config_id = f"{label.text}_config"
             input_types = config_input[0]
             input_default = config_input[1]
             add_next: bool = False

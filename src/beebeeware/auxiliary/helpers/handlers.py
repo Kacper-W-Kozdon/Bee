@@ -88,7 +88,7 @@ class update_config_val(OnConfirmHandler, OnChangeHandler):
 
         config_dict[config_key] = widget.value
 
-        raise NotImplementedError
+        # raise NotImplementedError
 
 
 class Update_Settings(OnCloseHandler):
