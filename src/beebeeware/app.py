@@ -479,7 +479,8 @@ class BeeBeeware(toga.App):
                         "Create a folder",
                         f"Do you wish to create the folder with the {path=}?",
                     )
-                    if confirmation:
+                    confirmation_out = self.instance.dialog(confirmation)
+                    if confirmation_out:
                         path.mkdir()
                     else:
                         return None
@@ -489,7 +490,8 @@ class BeeBeeware(toga.App):
                         "Create a folder",
                         f"Do you wish to create the folder with the {destination_path=}?",
                     )
-                    if confirmation:
+                    confirmation_out = self.instance.dialog(confirmation)
+                    if confirmation_out:
                         destination_path.mkdir()
                     else:
                         return None
@@ -602,7 +604,8 @@ class BeeBeeware(toga.App):
                         "Create a folder",
                         f"Do you wish to create the folder with the {path=}?",
                     )
-                    if confirmation:
+                    confirmation_out = self.instance.dialog(confirmation)
+                    if confirmation_out:
                         pathlib.Path(path).mkdir()
                     else:
                         return None
@@ -612,7 +615,8 @@ class BeeBeeware(toga.App):
                         "Create a folder",
                         f"Do you wish to create the folder with the {destination_path=}?",
                     )
-                    if confirmation:
+                    confirmation_out = self.instance.dialog(confirmation)
+                    if confirmation_out:
                         destination_path.mkdir()
                     else:
                         return None

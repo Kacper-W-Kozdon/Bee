@@ -702,8 +702,8 @@ class train_model(OnPressHandler):
 
         training_data: list[dict[str, str]] = []
 
-        source_path: str = f"{str(getattr(widget.app, 'config').get('source_path'))}"
-        destination_path: str = f"{source_path}\\train"
+        source_path: str = f"{toga.paths.Paths().config}\\Bee_training_data"
+        destination_path: str = f"{toga.paths.Paths().config}\\Bee_training_data\\train"
 
         print(f"{source_path, destination_path=}")
 
